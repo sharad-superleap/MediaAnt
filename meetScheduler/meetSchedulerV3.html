@@ -659,7 +659,7 @@
             grid-template-columns: 1fr 112px;
             gap: 10px;
         }
-        
+
         .select-box select {
             padding: 0 40px 0 14px;
         }
@@ -670,6 +670,93 @@
 
         .ampm button {
             font-size: 15px;
+        }
+
+        /* ── meeting type dropdown ── */
+        .mt {
+            position: relative;
+        }
+
+        .mt-field {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            height: 46px;
+            padding: 0 40px 0 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #fff;
+            font-size: 15px;
+            color: #111827;
+            cursor: pointer;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .mt-field:focus,
+        .mt.open .mt-field {
+            border-color: #374151;
+            box-shadow: 0 0 0 3px rgba(55, 65, 81, .10);
+        }
+
+        .mt-ico {
+            display: inline-flex;
+            color: #175259;
+            flex-shrink: 0;
+        }
+
+        .mt-chev {
+            position: absolute;
+            right: 14px;
+            top: 14px;
+            color: #374151;
+            pointer-events: none;
+            transition: transform .15s;
+        }
+
+        .mt.open .mt-chev {
+            transform: rotate(180deg);
+        }
+
+        .mt-pop {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 6px);
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(16, 24, 40, .16);
+            z-index: 60;
+            padding: 4px;
+        }
+
+        .mt-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #111827;
+        }
+
+        .mt-item .mt-name {
+            flex: 1;
+        }
+
+        .mt-item:hover {
+            background: #f3f6f7;
+        }
+
+        .mt-item.on {
+            background: #eef4f5;
+        }
+
+        .mt-item.on .att-tick {
+            visibility: visible;
         }
 
         @media (max-width: 560px) {
@@ -736,6 +823,23 @@
                             <button type="button" class="cal-link" id="att-done">Done</button>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Meeting type -->
+            <div class="field">
+                <span class="label" id="mt-label">Meeting type</span>
+                <div class="mt" id="mt">
+                    <div class="mt-field" id="mt-field" tabindex="0" role="combobox" aria-haspopup="listbox"
+                        aria-expanded="false" aria-labelledby="mt-label">
+                        <span class="mt-ico" id="mt-ico"></span>
+                        <span id="mt-val">Online</span>
+                        <svg class="mt-chev" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+                    <div class="mt-pop" id="mt-pop" role="listbox" hidden></div>
                 </div>
             </div>
 
@@ -860,7 +964,8 @@
         // STATE
         // ═══════════════════════════════════════════════════════════════
         const state = {
-            mode: 'later',          // 'now' | 'later'
+            mode: 'later',     // 'now' | 'later'
+            meetingType: 'Online',
             startAmpm: 'PM',
             endAmpm: 'PM',
             endTouched: false,      // once the user edits the end time, stop auto-suggesting it
@@ -1165,6 +1270,7 @@
         }
 
         function openAtt() {
+            closeMt();
             closeCalendar();
             $('att-pop').hidden = false;
             $('att').classList.add('open');
@@ -1279,6 +1385,7 @@
         }
 
         function openCalendar() {
+            closeMt();
             closeAtt();
             const t = istTodayParts();
             const dp = parseDate($('date-text').value);
@@ -1325,6 +1432,78 @@
             // typing a valid date keeps the open calendar in sync
             $('date-text').addEventListener('input', () => { if (!$('cal-pop').hidden) renderCalendar(); });
         }
+
+
+
+        // ═══════════════════════════════════════════════════════════════
+        // MEETING TYPE — Online / Face to face
+        // ═══════════════════════════════════════════════════════════════
+        const MEETING_TYPES = {
+            "Online": {
+                label: 'Online',
+                icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>'
+            },
+            "Face-To-Face": {
+                label: 'Face to face',
+                icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+            },
+        };
+
+        const mtIsOpen = () => !$('mt-pop').hidden;
+
+        function renderMeetingType() {
+            const t = MEETING_TYPES[state.meetingType];
+            $('mt-ico').innerHTML = t.icon;
+            $('mt-val').textContent = t.label;
+            $('mt-pop').innerHTML = Object.entries(MEETING_TYPES).map(([k, v]) => {
+                const on = k === state.meetingType;
+                return `<div class="mt-item${on ? ' on' : ''}" role="option" aria-selected="${on}" data-v="${k}">
+            <span class="mt-ico">${v.icon}</span><span class="mt-name">${v.label}</span>${TICK}</div>`;
+            }).join('');
+        }
+
+        function openMt() {
+            closeCalendar(); closeAtt();
+            $('mt-pop').hidden = false;
+            $('mt').classList.add('open');
+            $('mt-field').setAttribute('aria-expanded', 'true');
+        }
+        function closeMt() {
+            if (!mtIsOpen()) return;
+            $('mt-pop').hidden = true;
+            $('mt').classList.remove('open');
+            $('mt-field').setAttribute('aria-expanded', 'false');
+        }
+        function selectMt(v) {
+            if (!MEETING_TYPES[v]) return;
+            state.meetingType = v;
+            renderMeetingType();
+            closeMt();
+            validate();
+        }
+
+        function initMeetingType() {
+            const field = $('mt-field');
+            field.addEventListener('click', () => { mtIsOpen() ? closeMt() : openMt(); });
+            field.addEventListener('keydown', e => {
+                const keys = Object.keys(MEETING_TYPES);
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); mtIsOpen() ? closeMt() : openMt(); }
+                else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    const i = keys.indexOf(state.meetingType);
+                    selectMt(keys[(i + (e.key === 'ArrowDown' ? 1 : -1) + keys.length) % keys.length]);
+                    openMt();
+                }
+                else if (e.key === 'Escape') { e.stopPropagation(); closeMt(); }
+            });
+            $('mt-pop').addEventListener('click', e => {
+                const it = e.target.closest('.mt-item');
+                if (it) selectMt(it.dataset.v);
+            });
+            document.addEventListener('click', e => { if (!$('mt').contains(e.target)) closeMt(); });
+            renderMeetingType();
+        }
+
 
         // ═══════════════════════════════════════════════════════════════
         // VALIDATION / TIME RESOLUTION
@@ -1403,7 +1582,8 @@
                 add_conference: true,
                 notify_guests: true,
                 idempotency_key: `${IDEMPOTENCY_PREFIX}-${state.me.email}-${startStr}`,
-                token: token
+                token: token,
+                meeting_type: state.meetingType,
             };
 
             state.submitting = true;
@@ -1480,6 +1660,7 @@
             });
             initCalendar();
             initAttendees();
+            initMeetingType();
 
             // start / end time
             $('start-select').addEventListener('change', e => {

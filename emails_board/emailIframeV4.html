@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        window.onerror = function (m, s, l, c, e) { window.parent.postMessage({ type: 'dashboard-error', error: { message: m, source: s, line: l, stack: e?.stack } }, '*'); return false; };
+        window.addEventListener('unhandledrejection', e => { window.parent.postMessage({ type: 'dashboard-error', error: { message: 'Unhandled Promise Rejection', reason: e.reason?.message || String(e.reason) } }, '*'); });
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deal Emails</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: transparent;
+            color: #1f2937;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button, input { font-family: inherit; }
+
+        .wrap { padding: 16px; }
+
+        .mail {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(16, 24, 40, .08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 32px);
+            min-height: 460px;
+        }
+
+        /* ── top bar ── */
+        .top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px 20px;
+            border-bottom: 1px solid #eef1f4;
+        }
+
+        .title { font-size: 17px; font-weight: 600; color: #111827; letter-spacing: -0.01em; }
+        .title .sub { display: block; font-size: 12px; font-weight: 400; color: #6b7280; margin-top: 2px; }
+
+        .tools { display: flex; align-items: center; gap: 8px; margin-left: auto; flex: 1; justify-content: flex-end; }
+
+        .search { position: relative; flex: 1; max-width: 340px; min-width: 140px; }
+
+        .search input {
+            width: 100%;
+            height: 36px;
+            padding: 0 12px 0 34px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+            font-size: 13px;
+            outline: none;
+            transition: border-color .15s, background .15s;
+        }
+
+        .search input:focus { border-color: #175259; background: #fff; }
+
+        .search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #9ca3af; }
+
+        .icon-btn {
+            width: 36px; height: 36px; flex-shrink: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            border: 1px solid #e5e7eb; border-radius: 8px;
+            background: #fff; color: #374151; cursor: pointer;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .icon-btn:hover { background: #f3f4f6; border-color: #175259; color: #175259; }
+        .icon-btn.spinning svg { animation: spin .8s linear infinite; }
+
+        /* ── More filters ── */
+        .filter-wrap { position: relative; flex-shrink: 0; }
+
+        .more-btn {
+            height: 36px; display: inline-flex; align-items: center; gap: 8px;
+            padding: 0 12px; border: 1px solid #e5e7eb; border-radius: 8px;
+            background: #fff; color: #374151; font-size: 13px; font-weight: 500;
+            cursor: pointer; white-space: nowrap;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .more-btn:hover, .more-btn.open { border-color: #175259; color: #175259; background: #f5fafa; }
+
+        .count-dot {
+            min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+            background: #175259; color: #fff; font-size: 11px; font-weight: 600;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+
+        .count-dot[hidden] { display: none; }
+
+        .pop {
+            position: absolute; right: 0; top: calc(100% + 8px);
+            width: 320px; max-width: calc(100vw - 48px);
+            background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(16, 24, 40, .16);
+            padding: 16px; z-index: 40;
+        }
+
+        .pop[hidden] { display: none; }
+        .pop-sec + .pop-sec { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f1f3; }
+        .pop-h { font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 10px; }
+
+        .sel-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            width: 100%; padding: 9px 12px;
+            border: 1px solid #e5e7eb; border-radius: 8px; background: #fff;
+            color: #374151; font-size: 13.5px; text-align: left; cursor: pointer;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .sel-row:hover { background: #f9fafb; }
+        .sel-row .tick { display: none; flex-shrink: 0; color: #1d6fb8; }
+        .sel-row.on { background: #e8f3fd; border-color: #bcdcf7; color: #14558f; font-weight: 500; }
+        .sel-row.on:hover { background: #dff0fc; }
+        .sel-row.on .tick { display: block; }
+
+        .pills { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .pill-l { display: block; font-size: 11.5px; color: #9ca3af; margin-bottom: 4px; }
+        .date-box { position: relative; }
+
+        .pill {
+            width: 100%; height: 36px; padding: 0 36px 0 14px;
+            border: 1px solid #e5e7eb; border-radius: 999px;
+            font-family: inherit; font-size: 13px; color: #111827; background: #fff; outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .pill::placeholder { color: #9ca3af; }
+        .pill:focus { border-color: #374151; box-shadow: 0 0 0 3px rgba(55, 65, 81, .10); }
+
+        .cal-btn {
+            position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; color: #374151;
+            padding: 5px; line-height: 0; border-radius: 50%;
+        }
+
+        .cal-btn:hover { background: #eef4f5; color: #175259; }
+
+        /* custom calendar (same look as the meet scheduler) */
+        .cal-title { font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+        .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .cal-month { font-size: 15px; font-weight: 600; color: #111827; }
+
+        .cal-nav {
+            width: 32px; height: 32px; border: none; background: none; border-radius: 8px;
+            cursor: pointer; color: #374151; display: inline-flex; align-items: center; justify-content: center;
+        }
+
+        .cal-nav:hover { background: #f3f4f6; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .cal-dow { font-size: 12px; font-weight: 500; color: #9ca3af; text-align: center; padding: 6px 0; }
+
+        .cal-day {
+            height: 34px; border: 1px solid transparent; background: none; border-radius: 8px;
+            font-size: 14px; color: #111827; cursor: pointer; font-variant-numeric: tabular-nums;
+        }
+
+        .cal-day:hover:not(.sel) { background: #eef4f5; }
+        .cal-day.today { border-color: #175259; color: #175259; font-weight: 600; }
+        .cal-day.sel { background: #175259; border-color: #175259; color: #fff; font-weight: 600; }
+
+        .cal-foot { margin-top: 10px; padding-top: 10px; border-top: 1px solid #f0f1f3; display: flex; justify-content: space-between; align-items: center; }
+        .cal-link { background: none; border: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #175259; padding: 4px 8px; border-radius: 6px; }
+        .cal-link:hover { background: #eef4f5; }
+        .cal-link.muted { color: #6b7280; font-weight: 500; }
+        .pop-hint { font-size: 11.5px; color: #9ca3af; margin-top: 8px; line-height: 1.45; }
+        .pop-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
+
+        .flink { border: none; background: none; color: #175259; font-weight: 600; font-size: 12.5px; cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+        .flink:hover { background: #eef4f5; }
+
+        /* active filter chips */
+        .activebar {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+            padding: 8px 20px; border-bottom: 1px solid #eef1f4; background: #fafbfb;
+        }
+
+        .activebar[hidden] { display: none; }
+
+        .fchip {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #e8f1f2; color: #0f3d42; border-radius: 999px;
+            padding: 3px 6px 3px 12px; font-size: 12.5px;
+        }
+
+        .fchip button { border: none; background: none; cursor: pointer; color: #175259; font-size: 16px; line-height: 1; padding: 0 4px; border-radius: 50%; }
+        .fchip button:hover { background: #d6e7e9; }
+
+        /* ── tabs ── */
+        .tabs { display: flex; gap: 4px; padding: 0 14px; border-bottom: 1px solid #eef1f4; }
+
+        .tab {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 12px 14px; border: none; background: none;
+            font-size: 13.5px; font-weight: 500; color: #6b7280; cursor: pointer;
+            border-bottom: 2px solid transparent; margin-bottom: -1px;
+        }
+
+        .tab:hover { color: #111827; }
+        .tab.active { color: #175259; border-bottom-color: #175259; font-weight: 600; }
+
+        .badge {
+            min-width: 22px; padding: 1px 7px; border-radius: 999px;
+            background: #f3f4f6; color: #6b7280;
+            font-size: 11.5px; font-weight: 600; text-align: center;
+        }
+
+        .tab.active .badge { background: #e8f1f2; color: #175259; }
+
+        /* ── body: list + reading pane ── */
+        .body { flex: 1; display: grid; grid-template-columns: minmax(300px, 38%) 1fr; min-height: 0; }
+
+        .list { overflow-y: auto; border-right: 1px solid #eef1f4; }
+
+        .row {
+            display: flex; gap: 12px; padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background .12s;
+        }
+
+        .row:hover { background: #f9fafb; }
+        .row.sel { background: #eef6f7; box-shadow: inset 3px 0 0 #175259; }
+
+        .avatar {
+            width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%;
+            background: #175259; color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 14px; text-transform: uppercase;
+        }
+
+        .row-main { flex: 1; min-width: 0; }
+        .row-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+        .row-who { font-weight: 600; color: #111827; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .row-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; color: #9ca3af; }
+        .row-date { font-size: 11.5px; color: #9ca3af; white-space: nowrap; }
+        .row-subj { font-size: 13px; color: #374151; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .row-snip { font-size: 12px; color: #6b7280; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        mark { background: #fef08a; color: inherit; border-radius: 2px; padding: 0 1px; }
+
+        .more { padding: 14px; text-align: center; }
+        .more-note { font-size: 12px; color: #9ca3af; margin-bottom: 8px; }
+
+        .btn {
+            height: 34px; padding: 0 18px;
+            border: 1px solid #d1d5db; border-radius: 8px;
+            background: #fff; color: #374151;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+        }
+
+        .btn:hover:not(:disabled) { background: #f3f4f6; }
+        .btn:disabled { color: #9ca3af; cursor: not-allowed; }
+
+        /* ── reading pane ── */
+        .read { overflow-y: auto; padding: 24px 28px; }
+
+        .read-subj {
+            font-size: 20px; font-weight: 600; color: #111827;
+            line-height: 1.3; letter-spacing: -0.01em; margin-bottom: 18px; word-break: break-word;
+        }
+
+        .meta {
+            display: grid; grid-template-columns: 70px 1fr; gap: 10px 12px;
+            font-size: 13px; padding: 14px 16px;
+            background: #f9fafb; border: 1px solid #eef1f4; border-radius: 10px;
+        }
+
+        .meta .k { color: #9ca3af; font-weight: 500; }
+        .meta .v { color: #111827; display: flex; flex-wrap: wrap; gap: 6px; word-break: break-all; }
+
+        .chip { background: #e8f1f2; color: #0f3d42; border-radius: 999px; padding: 2px 10px; font-size: 12.5px; }
+        .chip.none { background: none; color: #9ca3af; padding: 0; }
+
+        .dir-tag { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+        .dir-tag.sent { background: #dbeafe; color: #1d4ed8; }
+        .dir-tag.received { background: #dcfce7; color: #166534; }
+
+        /* attachments */
+        .atts-label { margin: 18px 0 8px; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .4px; }
+        .atts { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .att {
+            display: inline-flex; align-items: center; gap: 8px;
+            max-width: 100%; padding: 8px 12px;
+            border: 1px solid #e5e7eb; border-radius: 8px; background: #fff;
+            color: #111827; text-decoration: none; font-size: 13px;
+            transition: border-color .15s, background .15s;
+        }
+
+        .att:hover { border-color: #175259; background: #f5fafa; }
+        .att svg { flex-shrink: 0; color: #175259; }
+        .att .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px; }
+        .att .ext { flex-shrink: 0; font-size: 10.5px; font-weight: 700; color: #6b7280; background: #f3f4f6; border-radius: 4px; padding: 1px 6px; }
+
+        /* message body */
+        .notice {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            margin-top: 18px; padding: 8px 12px;
+            background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px;
+            color: #92400e; font-size: 12.5px;
+        }
+
+        .notice button { border: none; background: none; color: #175259; font-weight: 600; cursor: pointer; font-size: 12.5px; }
+
+        .body-frame { display: block; width: 100%; height: 80px; border: 0; margin-top: 18px; background: #fff; }
+        .body-sep { height: 1px; background: #eef1f4; margin-top: 18px; }
+
+        /* states */
+        .empty { padding: 48px 20px; text-align: center; color: #9ca3af; font-size: 13px; }
+        .empty.err { color: #b91c1c; }
+        .read > .empty { padding-top: 110px; }
+
+        .loader {
+            border: 3px solid #f3f3f3; border-top: 3px solid #175259; border-radius: 50%;
+            width: 28px; height: 28px; animation: spin .8s linear infinite; margin: 40px auto;
+        }
+
+        .loader.small { width: 22px; height: 22px; margin: 28px auto; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 760px) {
+            .body { grid-template-columns: 1fr; }
+            .list { border-right: none; max-height: 40vh; border-bottom: 1px solid #eef1f4; }
+            .top { flex-wrap: wrap; }
+            .tools { width: 100%; }
+            .search { max-width: none; }
+            .read { padding: 18px; }
+            .activebar { padding: 8px 14px; }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="mail">
+            <div class="top">
+                <div class="title">Deal emails<span class="sub" id="sub">Loading…</span></div>
+                <div class="tools">
+                    <div class="search">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="M21 21l-4.3-4.3" />
+                        </svg>
+                        <input id="search" type="text" placeholder="Search mails, content, attachments" autocomplete="off">
+                    </div>
+
+                    <div class="filter-wrap">
+                        <button class="more-btn" id="more-filters-btn" type="button" aria-haspopup="true" aria-expanded="false">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 6h16M7 12h10M10 18h4" />
+                            </svg>
+                            More filters
+                            <span class="count-dot" id="filter-count" hidden>0</span>
+                        </button>
+                        <div class="pop" id="filter-pop" hidden>
+                            <div id="pop-main">
+                                <div class="pop-sec">
+                                    <div class="pop-h">Attachment</div>
+                                    <button class="sel-row" id="att-toggle" type="button" aria-pressed="false">
+                                        <span>Has attachment</span>
+                                        <svg class="tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M5 12.5l4.5 4.5L19 7.5" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="pop-sec">
+                                    <div class="pop-h">Date</div>
+                                    <div class="pills">
+                                        <div>
+                                            <label class="pill-l" for="f-from">Start date</label>
+                                            <div class="date-box">
+                                                <input class="pill" id="f-from" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off">
+                                                <button class="cal-btn" type="button" data-cal="from" aria-label="Pick start date">
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                                        <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+                                                        <path d="M3.5 10h17M8 3v4M16 3v4M12 13.5v4" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="pill-l" for="f-to">End date</label>
+                                            <div class="date-box">
+                                                <input class="pill" id="f-to" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off">
+                                                <button class="cal-btn" type="button" data-cal="to" aria-label="Pick end date">
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                                        <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+                                                        <path d="M3.5 10h17M8 3v4M16 3v4M12 13.5v4" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="pop-hint">Filters on the sent date in the Sent tab and the received date in the Received tab. Enter only one date to see mails from that day.</div>
+                                </div>
+                                <div class="pop-foot"><button class="flink" id="f-clear" type="button">Clear all</button></div>
+                            </div>
+                            <div id="cal-view" hidden></div>
+                        </div>
+                    </div>
+
+                    <button class="icon-btn" id="refresh-btn" type="button" title="Refresh" aria-label="Refresh">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+                            <path d="M21 3v5h-5" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="sent">Sent <span class="badge" id="cnt-sent">–</span></button>
+                <button class="tab" data-tab="received">Received <span class="badge" id="cnt-received">–</span></button>
+            </div>
+
+            <div class="activebar" id="activebar" hidden></div>
+
+            <div class="body">
+                <div class="list" id="list">
+                    <div class="loader"></div>
+                </div>
+                <div class="read" id="read">
+                    <div class="empty">Select a mail to read it</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // CONFIG
+        // ═══════════════════════════════════════════════════════════════
+        const BASE_URL = 'https://app.superleap.com';
+        const API_URL = BASE_URL + '/api/v1/reports/execute';
+        const ME_URL = BASE_URL + '/api/v1/org/user/me';
+
+        const CLIENT_ID = 'superleapweb';
+        const CLIENT_SECRET = 'UEAlm1PWab8VXB5b';   // same as the other dashboards — confirm prod value
+
+        const EMAIL_OBJECT_SLUG = 'email';
+        const F = {
+            deal: 'email_deals',
+            direction: 'direction',
+            from: 'from_email',
+            to: 'recipient_email',
+            cc: 'cc',
+            bcc: 'bcc',
+            sentAt: 'sent_at',          // date used by the Sent tab + the Date filter on it
+            receivedAt: 'received_at', // date used by the Received tab (list date + Date filter)
+            subject: 'subject',
+            content: 'content',         // plain text twin of html_content: fetched in the list so it can be searched
+            html: 'html_content',       // heavy: fetched only when a mail is opened
+            attachments: 'attachments', // list of file URLs: fetched in the list (search + "has attachment" filter)
+        };
+        const DIR_SENT = 'sent';
+        const DIR_RECEIVED = 'received';
+
+        const PAGE_SIZE = 50;
+        const IST_MS = 5.5 * 60 * 60 * 1000;
+
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token') || params.get('authToken');
+        const dealId = params.get('id') || params.get('dealId') || params.get('deal_id');
+
+        // ═══════════════════════════════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════════════════════════════
+        const mk = () => ({ rows: [], offset: 0, done: false, loading: false, error: '', loaded: false });
+        const newFilters = () => ({ search: '', attach: false, from: '', to: '' });   // from/to = 'YYYY-MM-DD'
+        const state = {
+            me: null,
+            tab: 'sent',
+            selected: null,
+            showImages: false,        // remote images in mail bodies are blocked until the user allows them
+            tabFilters: { sent: newFilters(), received: newFilters() },   // every tab keeps its own search, attachment and date filters
+            data: { sent: mk(), received: mk() },
+            bodies: {},               // mail id -> { status: 'loading' | 'ok' | 'error', data, error }
+        };
+
+        // state.filters / state.search always mean the tab you are viewing; other tabs read tabFilters[tab] directly
+        Object.defineProperty(state, 'filters', { get() { return this.tabFilters[this.tab]; } });
+        Object.defineProperty(state, 'search', {
+            get() { return this.tabFilters[this.tab].search; },
+            set(v) { this.tabFilters[this.tab].search = v; }
+        });
+
+        const $ = id => document.getElementById(id);
+
+        // ═══════════════════════════════════════════════════════════════
+        // API HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        async function safe(fn, retries = 3) {
+            let lastErr;
+            for (let i = 0; i < retries; i++) {
+                try { return await fn(); }
+                catch (e) { lastErr = e; if (i < retries - 1) await sleep(600 * (i + 1)); }
+            }
+            throw lastErr;
+        }
+        async function query(q, slug) {
+            return safe(async () => {
+                const r = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ query: q, slug })
+                });
+                if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+                const j = await r.json();
+                if (!j.success) throw new Error(j.data?.message || 'API error');
+                return j.data.records || [];
+            });
+        }
+        const sqlStr = v => `'${String(v).replace(/'/g, "''")}'`;
+
+        async function loadMe() {
+            const r = await fetch(ME_URL, {
+                headers: { 'Authorization': `Bearer ${token}`, 'client-id': CLIENT_ID, 'client-secret': CLIENT_SECRET }
+            });
+            if (!r.ok) throw new Error(`Could not load current user (HTTP ${r.status})`);
+            const d = (await r.json())?.data || {};
+            if (!d.user_id || !d.email) throw new Error('Could not identify the current user');
+            return { id: d.user_id, email: String(d.email).trim().toLowerCase(), name: d.name || '' };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // DATE FILTER  (IST day boundaries; one date = that single day)
+        // ═══════════════════════════════════════════════════════════════
+        function dateBounds(tab = state.tab) {
+            let a = state.tabFilters[tab].from, b = state.tabFilters[tab].to;
+            if (!a && !b) return null;
+            if (!a) a = b;
+            if (!b) b = a;
+            if (a > b) [a, b] = [b, a];                       // 'YYYY-MM-DD' strings sort chronologically
+            const dayStart = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d) - IST_MS; };
+            return { a, b, start: dayStart(a), end: dayStart(b) + 24 * 60 * 60 * 1000 };   // exclusive: midnight starting the next day
+        }
+        const dateFieldFor = tab => tab === 'sent' ? F.sentAt : F.receivedAt;
+
+        // ═══════════════════════════════════════════════════════════════
+        // QUERY BUILDER  (deal from URL + current user's email + optional date range)
+        // ═══════════════════════════════════════════════════════════════
+
+        // ⚠ Set this to whichever expression passed your curl test
+        const emailMatch = (col, email) => `${col}::text ILIKE ${sqlStr('%' + email.replace(/[%_]/g, '') + '%')}`;
+        // B: `CAST(${col} AS TEXT) ILIKE ...`
+        // C: `${sqlStr(email)} = ANY(${col})`
+        // D: `${col} @> ARRAY[${sqlStr(email)}]`
+
+        function whereFor(tab) {
+            const base = `${F.deal} = ${sqlStr(dealId)}`;
+            const db = dateBounds(tab), df = dateFieldFor(tab);
+            const dateSql = db ? ` AND ${df} >= ${db.start} AND ${df} < ${db.end}` : '';
+            if (tab === 'sent') {
+                return `${base} AND ${F.direction} ILIKE ${sqlStr(DIR_SENT)} AND ${F.from} ILIKE ${sqlStr(state.me.email)}${dateSql}`;
+            }
+            const me = state.me.email;
+            const mine = [F.to, F.cc, F.bcc].map(col => emailMatch(col, me)).join(' OR ');
+            return `${base} AND ${F.direction} ILIKE ${sqlStr(DIR_RECEIVED)} AND (${mine})${dateSql}`;
+        }
+
+        // list query: light columns + content (search) + attachments (search / filter)
+        async function fetchPage(tab) {
+            const d = state.data[tab];
+            const q = `SELECT id, ${F.direction} as direction, ${F.from} as from_email, ${F.to} as recipient_email, ` +
+                `${F.cc} as cc, ${F.bcc} as bcc, ${F.sentAt} as sent_at, ${F.receivedAt} as received_at, ${F.subject} as subject, ` +
+                `${F.content} as content, ${F.attachments} as attachments ` +
+                `FROM ${EMAIL_OBJECT_SLUG} WHERE ${whereFor(tab)} ORDER BY ${dateFieldFor(tab)} DESC ` +
+                `LIMIT ${PAGE_SIZE} OFFSET ${d.offset}`;
+            return query(q, EMAIL_OBJECT_SLUG);
+        }
+
+        // body query: one mail, only the heavy html column
+        async function fetchBody(id) {
+            const q = `SELECT id, ${F.html} as html_content FROM ${EMAIL_OBJECT_SLUG} WHERE id = ${sqlStr(id)} LIMIT 1 OFFSET 0`;
+            const rows = await query(q, EMAIL_OBJECT_SLUG);
+            return rows[0] || {};
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // EMAIL ADDRESS HELPERS
+        // cc/bcc/recipient may be an array, "a@x.com, b@x.com", "Name <a@x.com>", "{}" or "{a@x.com,b@x.com}"
+        // ═══════════════════════════════════════════════════════════════
+        const extractEmails = v => {
+            const raw = Array.isArray(v) ? v.join(',') : String(v ?? '');
+            return raw.match(/[^\s<>,;"'{}]+@[^\s<>,;"'{}]+/g) || [];
+        };
+        const asList = v => extractEmails(v).map(s => s.toLowerCase());
+
+        const isMine = r => {
+            const me = state.me.email;
+            return asList(r.recipient_email).includes(me) || asList(r.cc).includes(me) || asList(r.bcc).includes(me);
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        // SEARCH INDEX  (built once per row when it is loaded)
+        // ═══════════════════════════════════════════════════════════════
+        // lowercase, and treat _ - . as spaces so "Media Ant" finds Media_Ant and "superleap.com" finds superleap com
+        const norm = s => String(s ?? '').toLowerCase().replace(/[_\-.]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+        const looksHtml = s => /<(html|body|div|p|br|span|table|tr|td|a|ul|ol|li|img|h[1-6]|b|i|u|strong|em|font|style|blockquote|section|center)\b[^>]*>/i.test(s);
+
+        // content may be plain text or HTML: reduce it to readable text
+        function contentText(c) {
+            let s = String(c ?? '');
+            if (!s.trim()) return '';
+            if (looksHtml(s)) {
+                s = s.replace(/<(style|script|head)[\s\S]*?<\/\1>/gi, ' ')
+                    .replace(/<br\s*\/?>|<\/(p|div|li|tr|h[1-6])>/gi, ' ')
+                    .replace(/<[^>]+>/g, ' ')
+                    .replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+                    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+            }
+            return s.replace(/\s+/g, ' ').trim();
+        }
+
+        // attachments can be an array of URLs, a JSON string, or null
+        function normAtt(a) {
+            if (!a) return [];
+            if (Array.isArray(a)) return a.filter(Boolean).map(String);
+            if (typeof a === 'string') {
+                try { const j = JSON.parse(a); if (Array.isArray(j)) return j.filter(Boolean).map(String); } catch (e) { }
+                return a.split(',').map(s => s.trim()).filter(u => /^https?:\/\//i.test(u));
+            }
+            return [];
+        }
+        // file name = last path segment of the URL (works for any org id / folder layout)
+        function rawName(url) {
+            try { return decodeURIComponent(new URL(url).pathname.split('/').pop() || ''); } catch (e) { return ''; }
+        }
+        function attName(url) {
+            // strip the "-<14 digit timestamp>-<8 hex>" suffix added on upload
+            return rawName(url).replace(/-\d{14}-[0-9a-f]{8}(?=\.[^.]+$|$)/i, '') || 'Attachment';
+        }
+        const attExt = n => (n.includes('.') ? n.split('.').pop().slice(0, 5).toUpperCase() : 'FILE');
+
+        function indexRow(r) {
+            r._atts = normAtt(r.attachments);
+            r._attNames = r._atts.map(attName);
+            r._text = contentText(r.content);
+            r._nMeta = norm([r.subject, r.from_email, ...extractEmails(r.recipient_email), ...extractEmails(r.cc), ...extractEmails(r.bcc)].join(' '));
+            r._nAtt = norm([...r._attNames, ...r._atts.map(rawName)].join(' '));
+            r._hay = `${r._nMeta} ${r._nAtt} ${norm(r._text)}`;
+            return r;
+        }
+
+        const searchTokens = (tab = state.tab) => norm(state.tabFilters[tab].search).split(' ').filter(Boolean);
+        const attachOn = (tab = state.tab) => state.tabFilters[tab].attach;
+        const filtersActive = (tab = state.tab) => !!(searchTokens(tab).length || attachOn(tab) || dateBounds(tab));
+
+        function visibleRows(tab) {
+            const tokens = searchTokens(tab), needAtt = attachOn(tab);
+            return state.data[tab].rows.filter(r => {
+                if (needAtt && !r._atts.length) return false;
+                return tokens.every(k => r._hay.includes(k));    // every word must appear somewhere in the mail
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // LOADING
+        // ═══════════════════════════════════════════════════════════════
+        async function loadTab(tab) {
+            const d = state.data[tab];
+            if (d.loading || d.done) return;
+            d.loading = true; d.error = '';
+            render();
+            try {
+                let kept = 0;
+                while (!d.done && kept < PAGE_SIZE) {
+                    const rows = await fetchPage(tab);
+                    if (state.data[tab] !== d) return;      // tab was reloaded meanwhile, drop the stale result
+                    d.offset += rows.length;
+                    if (rows.length < PAGE_SIZE) d.done = true;
+                    const mine = (tab === 'sent' ? rows : rows.filter(isMine)).map(indexRow);   // exact-address safety net
+                    d.rows = d.rows.concat(mine);
+                    kept += mine.length;
+                    if (tab === 'sent') break;
+                }
+                d.loaded = true;
+            } catch (e) {
+                if (state.data[tab] !== d) return;
+                console.error(e);
+                d.error = e.message;
+            } finally {
+                if (state.data[tab] === d) { d.loading = false; render(); }
+            }
+        }
+
+        // wipe the tab's data and query again from page 1
+        function reloadTab(tab) {
+            state.data[tab] = mk();
+            state.bodies = {};                       // signed attachment links expire, so re-fetch bodies too
+            if (tab === state.tab) state.selected = null;
+            return loadTab(tab);
+        }
+        // reload only the tab you are on (refresh icon, clearing a date); the other tab is left exactly as it was
+        function reloadActive() {
+            if (!state.me) return Promise.resolve();
+            return reloadTab(state.tab);
+        }
+        // first load only: fetch both tabs so both badges show a count
+        function reloadBoth() {
+            if (!state.me) return Promise.resolve();
+            return Promise.all([reloadTab(state.tab), reloadTab(state.tab === 'sent' ? 'received' : 'sent')]);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FORMAT HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        function toDate(v) {
+            if (v == null || v === '') return null;
+            const d = /^\d+$/.test(String(v)) ? new Date(Number(v)) : new Date(v);
+            return isNaN(d) ? null : d;
+        }
+        const rowDate = (r, tab) => tab === 'received' ? (r.received_at ?? r.sent_at) : r.sent_at;
+        function fmtShort(v) {
+            const d = toDate(v); if (!d) return '—';
+            const opt = { timeZone: 'Asia/Kolkata' };
+            const day = d.toLocaleDateString('en-CA', opt);
+            const today = new Date().toLocaleDateString('en-CA', opt);
+            if (day === today) return d.toLocaleTimeString('en-IN', { ...opt, hour: 'numeric', minute: '2-digit', hour12: true });
+            return d.toLocaleDateString('en-IN', { ...opt, day: 'numeric', month: 'short', year: '2-digit' });
+        }
+        function fmtFull(v) {
+            const d = toDate(v); if (!d) return '—';
+            return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) + ' IST';
+        }
+        const fmtDay = s => { const [y, m, d] = s.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-IN', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric' }); };
+        const firstOf = v => extractEmails(v)[0] || '';
+        const initial = s => (String(s).replace(/[^a-z0-9]/gi, '')[0] || '?');
+
+        const clipSvg = (n = 15) => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>`;
+
+        // highlight search words inside a text (safe: every piece is escaped)
+        const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        function hl(text, tokens) {
+            if (!tokens.length) return esc(text);
+            const re = new RegExp('(' + tokens.map(reEsc).join('|') + ')', 'ig');
+            return text.split(re).map((p, i) => i % 2 ? `<mark>${esc(p)}</mark>` : esc(p)).join('');
+        }
+
+        // one-line hint under the subject saying WHERE the search matched when it isn't visible in the row already
+        function matchHint(r, tokens) {
+            if (!tokens.length || tokens.every(k => r._nMeta.includes(k))) return '';
+            const low = r._text.toLowerCase();
+            const k = tokens.find(t => low.includes(t));
+            if (k) {
+                const i = low.indexOf(k), s = Math.max(0, i - 30), e = Math.min(r._text.length, i + k.length + 70);
+                return `<div class="row-snip">${s > 0 ? '…' : ''}${hl(r._text.slice(s, e), tokens)}${e < r._text.length ? '…' : ''}</div>`;
+            }
+            const a = r._attNames.find(n => tokens.some(t => norm(n).includes(t)));
+            if (a) return `<div class="row-snip">Attachment: ${hl(a, tokens)}</div>`;
+            return '';
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // MESSAGE BODY + ATTACHMENTS
+        // ═══════════════════════════════════════════════════════════════
+
+        // escaped plain text -> clickable links
+        function linkify(escaped) {
+            return escaped.replace(/https?:\/\/[^\s<>"]+/g, m => {
+                let u = m, tail = '';
+                const t = u.match(/(?:&gt;|&lt;|&quot;|[).,;!?\]])+$/);
+                if (t) { tail = t[0]; u = u.slice(0, u.length - tail.length); }
+                return `<a href="${u}">${u}</a>${tail}`;
+            });
+        }
+
+        function attachmentsHtml(list) {
+            if (!list.length) return '';
+            return `<div class="atts-label">Attachments (${list.length})</div><div class="atts">` +
+                list.map(u => {
+                    const n = attName(u);
+                    return `<a class="att" href="${esc(u)}" target="_blank" rel="noopener noreferrer" title="${esc(n)}">${clipSvg()}<span class="nm">${esc(n)}</span><span class="ext">${esc(attExt(n))}</span></a>`;
+                }).join('') + '</div>';
+        }
+
+        // html_content first, then content (HTML or plain text)
+        function pickBody(b) {
+            const html = b.html_content && String(b.html_content).trim() ? String(b.html_content) : '';
+            const text = b.content && String(b.content).trim() ? String(b.content) : '';
+            const remote = s => /<img[^>]+src\s*=\s*["']?https?:/i.test(s);
+            if (html) return { html, hasRemoteImg: remote(html) };
+            if (text && looksHtml(text)) return { html: text, hasRemoteImg: remote(text) };
+            if (text) return { html: `<div class="plain">${linkify(esc(text))}</div>`, hasRemoteImg: false };
+            return { html: '<div class="none">This mail has no content.</div>', hasRemoteImg: false };
+        }
+
+        // The body renders in a sandboxed iframe: scripts are disabled, links open in a new tab,
+        // and a CSP blocks everything except inline styles (and https images once the user allows them).
+        function buildDoc(b) {
+            const { html } = pickBody(b);
+            const img = state.showImages ? 'data: https: http:' : 'data:';
+            const csp = `default-src 'none'; style-src 'unsafe-inline'; img-src ${img}; font-src data:`;
+            return `<!DOCTYPE html><html><head><meta charset="utf-8">` +
+                `<meta http-equiv="Content-Security-Policy" content="${csp}"><base target="_blank">` +
+                `<style>body{margin:0;font:14px/1.6 Inter,-apple-system,'Segoe UI',Roboto,sans-serif;color:#1f2937;overflow-wrap:anywhere}` +
+                `img{max-width:100%;height:auto}table{max-width:100%}a{color:#175259}` +
+                `blockquote{margin:8px 0 8px 4px;padding-left:12px;border-left:3px solid #e5e7eb;color:#6b7280}` +
+                `.plain{white-space:pre-wrap}.none{color:#9ca3af}</style></head><body>${html}</body></html>`;
+        }
+
+        function mountBody(b) {
+            const fr = $('body-frame'); if (!fr) return;
+            const fit = () => {
+                try {
+                    const d = fr.contentDocument;
+                    if (d && d.documentElement) fr.style.height = Math.max(60, d.documentElement.scrollHeight) + 'px';
+                } catch (e) { }
+            };
+            fr.addEventListener('load', () => {
+                fit();
+                try { new ResizeObserver(fit).observe(fr.contentDocument.documentElement); } catch (e) { }
+                try { fr.contentDocument.addEventListener('click', closeFilters); } catch (e) { }   // click inside the mail body = outside the popover
+            });
+            fr.srcdoc = buildDoc(b);
+        }
+
+        const findRow = id => { for (const t of ['sent', 'received']) { const r = state.data[t].rows.find(x => x.id === id); if (r) return r; } return null; };
+
+        async function ensureBody(id) {
+            const cur = state.bodies[id];
+            if (cur && cur.status !== 'error') return;
+            state.bodies[id] = { status: 'loading' };
+            renderRead();
+            try {
+                const row = await fetchBody(id);
+                const base = findRow(id) || {};      // content + attachments already came with the list
+                state.bodies[id] = { status: 'ok', data: { html_content: row.html_content, content: base.content, attachments: base.attachments } };
+            } catch (e) {
+                console.error(e);
+                state.bodies[id] = { status: 'error', error: e.message };
+            }
+            if (state.selected === id) renderRead();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // RENDER
+        // ═══════════════════════════════════════════════════════════════
+        function renderCounts() {
+            ['sent', 'received'].forEach(t => {
+                const d = state.data[t];
+                $('cnt-' + t).textContent = !d.loaded ? '–' : (visibleRows(t).length + (d.done ? '' : '+'));
+            });
+        }
+
+        function renderActive() {
+            const items = [];
+            const db = dateBounds();
+            if (attachOn()) items.push(['attach', 'Has attachment']);
+            if (db) items.push(['date', `${state.tab === 'sent' ? 'Sent' : 'Received'} date: ${db.a === db.b ? fmtDay(db.a) : fmtDay(db.a) + ' – ' + fmtDay(db.b)}`]);
+            const cnt = $('filter-count');
+            cnt.textContent = items.length; cnt.hidden = !items.length;
+            const bar = $('activebar');
+            bar.hidden = !items.length;
+            bar.innerHTML = items.map(([k, l]) => `<span class="fchip">${esc(l)}<button type="button" data-clear="${k}" aria-label="Remove filter">×</button></span>`).join('') +
+                (items.length > 1 ? '<button class="flink" type="button" data-clear="all">Clear all</button>' : '');
+        }
+
+        function renderList() {
+            const tab = state.tab, d = state.data[tab], list = $('list');
+            if (!d.loaded && d.loading) { list.innerHTML = '<div class="loader"></div>'; return; }
+            if (d.error && !d.rows.length) { list.innerHTML = `<div class="empty err">Could not load mails.<br>${esc(d.error)}</div>`; return; }
+
+            const rows = visibleRows(tab), tokens = searchTokens(tab);
+            if (!rows.length) {
+                list.innerHTML = `<div class="empty">${filtersActive(tab) ? 'No mails match your search or filters.' : `No ${tab} mails for this deal.`}</div>` + moreHtml(d);
+                return;
+            }
+            list.innerHTML = rows.map(r => {
+                // sent → show who it went to; received → show who it came from
+                const who = tab === 'sent' ? (firstOf(r.recipient_email) || '(no recipient)') : (r.from_email || '(unknown sender)');
+                const extra = tab === 'sent' ? extractEmails(r.recipient_email).length - 1 : 0;
+                return `<div class="row ${r.id === state.selected ? 'sel' : ''}" data-id="${esc(r.id)}">
+                    <div class="avatar">${esc(initial(who))}</div>
+                    <div class="row-main">
+                        <div class="row-top">
+                            <div class="row-who">${tab === 'sent' ? 'To: ' : ''}${esc(who)}${extra > 0 ? ` +${extra}` : ''}</div>
+                            <div class="row-meta">${r._atts.length ? clipSvg(13) : ''}<span class="row-date">${esc(fmtShort(rowDate(r, tab)))}</span></div>
+                        </div>
+                        <div class="row-subj">${hl(r.subject || '(no subject)', tokens)}</div>
+                        ${matchHint(r, tokens)}
+                    </div>
+                </div>`;
+            }).join('') + moreHtml(d);
+        }
+
+        function moreHtml(d) {
+            if (d.error && d.rows.length) return `<div class="more"><div style="color:#b91c1c;font-size:12px;margin-bottom:8px">${esc(d.error)}</div><button class="btn" id="more-btn">Retry</button></div>`;
+            if (d.done) return '';
+            const note = (searchTokens().length || attachOn()) ? '<div class="more-note">Search and attachment filters apply to the mails loaded so far.</div>' : '';
+            return `<div class="more">${note}<button class="btn" id="more-btn" ${d.loading ? 'disabled' : ''}>${d.loading ? 'Loading…' : 'Load more'}</button></div>`;
+        }
+
+        const chips = v => {
+            const a = extractEmails(v);
+            return a.length ? a.map(e => `<span class="chip">${esc(e)}</span>`).join('') : '<span class="chip none">—</span>';
+        };
+
+        let _readKey = 'none';   // skip re-rendering the reading pane when nothing about it changed (keeps scroll position)
+
+        function renderRead() {
+            const r = state.data[state.tab].rows.find(x => x.id === state.selected);
+            const b = r ? state.bodies[r.id] : null;
+            const key = r ? `${r.id}|${b ? b.status : 'none'}|${state.showImages}` : 'none';
+            if (key === _readKey) return;
+            _readKey = key;
+
+            if (!r) { $('read').innerHTML = '<div class="empty">Select a mail to read it</div>'; return; }
+
+            let bodyHtml;
+            if (!b || b.status === 'loading') {
+                bodyHtml = '<div class="loader small"></div>';
+            } else if (b.status === 'error') {
+                bodyHtml = `<div class="empty err">Could not load the message.<br>${esc(b.error)}<br><br><button class="btn" id="retry-body">Retry</button></div>`;
+            } else {
+                const notice = pickBody(b.data).hasRemoteImg && !state.showImages
+                    ? `<div class="notice"><span>Remote images are blocked to protect your privacy.</span><button id="show-img" type="button">Show images</button></div>` : '';
+                bodyHtml = attachmentsHtml(normAtt(b.data.attachments)) + notice +
+                    '<div class="body-sep"></div>' +
+                    '<iframe id="body-frame" class="body-frame" title="Message" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox"></iframe>';
+            }
+
+            const dir = String(r.direction || state.tab).toLowerCase();
+            $('read').innerHTML = `
+                <div class="read-subj">${esc(r.subject || '(no subject)')}</div>
+                <div class="meta">
+                    <div class="k">Type</div><div class="v"><span class="dir-tag ${dir === 'sent' ? 'sent' : 'received'}">${dir === 'sent' ? 'Sent' : 'Received'}</span></div>
+                    <div class="k">From</div><div class="v">${chips(r.from_email)}</div>
+                    <div class="k">To</div><div class="v">${chips(r.recipient_email)}</div>
+                    <div class="k">Cc</div><div class="v">${chips(r.cc)}</div>
+                    <div class="k">Bcc</div><div class="v">${chips(r.bcc)}</div>
+                    <div class="k">Sent</div><div class="v">${esc(fmtFull(r.sent_at))}</div>
+                    ${dir === 'received' ? `<div class="k">Received</div><div class="v">${esc(fmtFull(r.received_at ?? r.sent_at))}</div>` : ''}
+                </div>
+                ${bodyHtml}`;
+
+            if (b && b.status === 'ok') mountBody(b.data);
+        }
+
+        function render() {
+            renderCounts();
+            renderActive();
+            renderList();
+            renderRead();
+            $('refresh-btn').classList.toggle('spinning', state.data.sent.loading || state.data.received.loading);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // EVENTS
+        // ═══════════════════════════════════════════════════════════════
+        function switchTab(tab) {
+            state.tab = tab;
+            state.selected = null;
+            closeFilters();
+            syncFilterInputs();
+            $('search').value = state.search;
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+            reloadTab(tab);          // every click on Sent / Received hits the API again
+        }
+
+        function selectMail(id) {
+            state.selected = id;
+            renderList();
+            renderRead();
+            ensureBody(id);
+        }
+
+        function syncFilterInputs() {
+            const on = state.filters.attach;
+            $('att-toggle').classList.toggle('on', on);
+            $('att-toggle').setAttribute('aria-pressed', String(on));
+            ['from', 'to'].forEach(k => {
+                const el = $('f-' + k);
+                if (document.activeElement !== el) el.value = toDMY(state.filters[k]);   // don't overwrite text being typed
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // DATE PILLS + CUSTOM CALENDAR  (state keeps 'YYYY-MM-DD', the UI shows DD/MM/YYYY)
+        // ═══════════════════════════════════════════════════════════════
+        const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        const cal = { y: 0, m: 0, target: 'from' };     // month being viewed (m is 0-11) + which pill is being picked
+        const pad = n => String(n).padStart(2, '0');
+        const dayKey = (y, m1, d) => y * 10000 + m1 * 100 + d;
+        const toDMY = iso => iso ? iso.split('-').reverse().join('/') : '';
+
+        function parseDMY(txt) {
+            const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(txt).trim());
+            if (!m) return null;
+            const d = +m[1], mo = +m[2], y = +m[3];
+            const chk = new Date(Date.UTC(y, mo - 1, d));
+            if (y < 1970 || chk.getUTCFullYear() !== y || chk.getUTCMonth() !== mo - 1 || chk.getUTCDate() !== d) return null;
+            return `${y}-${pad(mo)}-${pad(d)}`;
+        }
+        function istToday() {
+            const d = new Date(Date.now() + IST_MS);
+            return { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate() };
+        }
+
+        const dateTimers = {};
+        function setDateFilter(target, iso) {
+            if (state.filters[target] === iso) return;
+            state.filters[target] = iso;
+            syncFilterInputs();
+            renderActive();
+            const tab = state.tab;                         // this date belongs to this tab only
+            clearTimeout(dateTimers[tab]);
+            dateTimers[tab] = setTimeout(() => { if (state.me) reloadTab(tab); }, 250);   // the date range is part of the query
+        }
+
+        function renderCalendar() {
+            const t = istToday(), todayK = dayKey(t.y, t.m, t.d);
+            const iso = state.filters[cal.target], selK = iso ? +iso.replace(/-/g, '') : null;
+            const firstDow = new Date(Date.UTC(cal.y, cal.m, 1)).getUTCDay();
+            const dim = new Date(Date.UTC(cal.y, cal.m + 1, 0)).getUTCDate();
+            let cells = DOW.map(d => `<div class="cal-dow">${d}</div>`).join('');
+            for (let i = 0; i < firstDow; i++) cells += '<div></div>';
+            for (let d = 1; d <= dim; d++) {
+                const k = dayKey(cal.y, cal.m + 1, d);
+                const cls = ['cal-day', k === todayK ? 'today' : '', k === selK ? 'sel' : ''].filter(Boolean).join(' ');
+                cells += `<button type="button" class="${cls}" data-d="${d}">${d}</button>`;
+            }
+            const chev = dir => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${dir < 0 ? 'M15 6l-6 6 6 6' : 'M9 6l6 6-6 6'}"/></svg>`;
+            $('cal-view').innerHTML = `
+                <div class="cal-title">${cal.target === 'from' ? 'Start date' : 'End date'}</div>
+                <div class="cal-head">
+                    <button type="button" class="cal-nav" data-nav="-1" aria-label="Previous month">${chev(-1)}</button>
+                    <div class="cal-month">${MONTHS[cal.m]} ${cal.y}</div>
+                    <button type="button" class="cal-nav" data-nav="1" aria-label="Next month">${chev(1)}</button>
+                </div>
+                <div class="cal-grid">${cells}</div>
+                <div class="cal-foot">
+                    <button type="button" class="cal-link" data-today="1">Today</button>
+                    <span>
+                        <button type="button" class="cal-link muted" data-cclear="1">Clear</button>
+                        <button type="button" class="cal-link muted" data-back="1">Back</button>
+                    </span>
+                </div>`;
+        }
+        function openCal(target) {
+            cal.target = target;
+            const t = istToday();
+            const iso = state.filters[target] || state.filters[target === 'from' ? 'to' : 'from'];
+            if (iso) { const [y, m] = iso.split('-').map(Number); cal.y = y; cal.m = m - 1; }
+            else { cal.y = t.y; cal.m = t.m - 1; }
+            renderCalendar();
+            $('pop-main').hidden = true;
+            $('cal-view').hidden = false;
+        }
+        function closeCal() {
+            $('cal-view').hidden = true;
+            $('pop-main').hidden = false;
+        }
+        // closes the whole More filters popover (used by outside clicks, including clicks inside the mail body iframe)
+        function closeFilters() {
+            closeCal();
+            $('filter-pop').hidden = true;
+            const mb = $('more-filters-btn');
+            mb.classList.remove('open');
+            mb.setAttribute('aria-expanded', 'false');
+        }
+
+        function clearFilter(k) {
+            let dateChanged = false;
+            if (k === 'attach' || k === 'all') state.filters.attach = false;
+            if (k === 'date' || k === 'all') {
+                dateChanged = !!(state.filters.from || state.filters.to);
+                state.filters.from = ''; state.filters.to = '';
+            }
+            syncFilterInputs();
+            if (dateChanged) reloadActive(); else render();     // the date range is part of the query, so it needs a reload
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.querySelector('.tabs').addEventListener('click', e => {
+                const t = e.target.closest('.tab'); if (t) switchTab(t.dataset.tab);
+            });
+            $('search').addEventListener('input', e => { state.search = e.target.value; renderCounts(); renderList(); });
+            $('list').addEventListener('click', e => {
+                if (e.target.closest('#more-btn')) { loadTab(state.tab); return; }
+                const row = e.target.closest('.row'); if (!row) return;
+                selectMail(row.dataset.id);
+            });
+            $('read').addEventListener('click', e => {
+                if (e.target.closest('#show-img')) { state.showImages = true; renderRead(); return; }
+                if (e.target.closest('#retry-body') && state.selected) ensureBody(state.selected);
+            });
+            $('refresh-btn').addEventListener('click', reloadActive);
+
+            // ── More filters popover ──
+            const pop = $('filter-pop'), mb = $('more-filters-btn');
+            const setPop = open => { if (!open) closeCal(); pop.hidden = !open; mb.classList.toggle('open', open); mb.setAttribute('aria-expanded', String(open)); };
+            mb.addEventListener('click', e => { e.stopPropagation(); setPop(pop.hidden); });
+            document.addEventListener('click', e => { if (!e.target.closest('.filter-wrap')) setPop(false); });
+            window.addEventListener('blur', closeFilters);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('cal-view').hidden) closeCal(); else setPop(false); } });
+
+            $('att-toggle').addEventListener('click', () => {
+                state.filters.attach = !state.filters.attach;     // click again to remove it
+                syncFilterInputs();
+                render();
+            });
+
+            // date pills: type DD/MM/YYYY (slashes are added for you) or pick from the calendar icon
+            ['from', 'to'].forEach(k => {
+                const inp = $('f-' + k);
+                inp.addEventListener('input', () => {
+                    let v = inp.value.replace(/[^\d]/g, '').slice(0, 8);
+                    if (v.length > 4) v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+                    else if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+                    inp.value = v;
+                    if (v === '') { setDateFilter(k, ''); return; }
+                    const iso = parseDMY(v);
+                    if (iso) setDateFilter(k, iso);
+                });
+                inp.addEventListener('blur', () => { inp.value = toDMY(state.filters[k]); });   // drop half-typed text
+            });
+            $('pop-main').addEventListener('click', e => {
+                const b = e.target.closest('[data-cal]'); if (b) openCal(b.dataset.cal);
+            });
+            $('cal-view').addEventListener('click', e => {
+                e.stopPropagation();                       // the calendar re-renders itself, so don't let the outside-click handler see it
+                const day = e.target.closest('[data-d]'), nav = e.target.closest('[data-nav]');
+                if (day) { setDateFilter(cal.target, `${cal.y}-${pad(cal.m + 1)}-${pad(+day.dataset.d)}`); closeCal(); return; }
+                if (nav) {
+                    cal.m += +nav.dataset.nav;
+                    if (cal.m < 0) { cal.m = 11; cal.y--; } else if (cal.m > 11) { cal.m = 0; cal.y++; }
+                    renderCalendar(); return;
+                }
+                if (e.target.closest('[data-today]')) { const t = istToday(); setDateFilter(cal.target, `${t.y}-${pad(t.m)}-${pad(t.d)}`); closeCal(); return; }
+                if (e.target.closest('[data-cclear]')) { setDateFilter(cal.target, ''); closeCal(); return; }
+                if (e.target.closest('[data-back]')) closeCal();
+            });
+            $('f-clear').addEventListener('click', () => clearFilter('all'));
+            $('activebar').addEventListener('click', e => {
+                const b = e.target.closest('[data-clear]'); if (b) clearFilter(b.dataset.clear);
+            });
+
+            if (!token || !dealId) {
+                $('sub').textContent = '';
+                $('list').innerHTML = `<div class="empty err">${!token ? 'Missing auth token in the URL (?token=…).' : 'Missing deal id in the URL (?id=…).'}</div>`;
+                return;
+            }
+
+            try {
+                state.me = await loadMe();
+            } catch (e) {
+                $('sub').textContent = '';
+                $('list').innerHTML = `<div class="empty err">${esc(e.message)}</div>`;
+                return;
+            }
+
+            $('sub').textContent = `Showing mails for ${state.me.email}`;
+            await reloadBoth();
+        });
+    </script>
+</body>
+
+</html>

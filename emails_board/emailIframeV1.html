@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        window.onerror = function (m, s, l, c, e) { window.parent.postMessage({ type: 'dashboard-error', error: { message: m, source: s, line: l, stack: e?.stack } }, '*'); return false; };
+        window.addEventListener('unhandledrejection', e => { window.parent.postMessage({ type: 'dashboard-error', error: { message: 'Unhandled Promise Rejection', reason: e.reason?.message || String(e.reason) } }, '*'); });
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deal Emails</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: transparent;
+            color: #1f2937;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button,
+        input {
+            font-family: inherit;
+        }
+
+        .wrap {
+            padding: 16px;
+        }
+
+        .mail {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(16, 24, 40, .08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 32px);
+            min-height: 460px;
+        }
+
+        /* ── top bar ── */
+        .top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px 20px;
+            border-bottom: 1px solid #eef1f4;
+        }
+
+        .title {
+            font-size: 17px;
+            font-weight: 600;
+            color: #111827;
+            letter-spacing: -0.01em;
+        }
+
+        .title .sub {
+            display: block;
+            font-size: 12px;
+            font-weight: 400;
+            color: #6b7280;
+            margin-top: 2px;
+        }
+
+        .search {
+            position: relative;
+            width: 280px;
+            max-width: 100%;
+        }
+
+        .search input {
+            width: 100%;
+            height: 36px;
+            padding: 0 12px 0 34px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+            font-size: 13px;
+            outline: none;
+            transition: border-color .15s, background .15s;
+        }
+
+        .search input:focus {
+            border-color: #175259;
+            background: #fff;
+        }
+
+        .search svg {
+            position: absolute;
+            left: 11px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+        }
+
+        /* ── tabs ── */
+        .tabs {
+            display: flex;
+            gap: 4px;
+            padding: 0 14px;
+            border-bottom: 1px solid #eef1f4;
+        }
+
+        .tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 14px;
+            border: none;
+            background: none;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: #6b7280;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+        }
+
+        .tab:hover {
+            color: #111827;
+        }
+
+        .tab.active {
+            color: #175259;
+            border-bottom-color: #175259;
+            font-weight: 600;
+        }
+
+        .badge {
+            min-width: 22px;
+            padding: 1px 7px;
+            border-radius: 999px;
+            background: #f3f4f6;
+            color: #6b7280;
+            font-size: 11.5px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .tab.active .badge {
+            background: #e8f1f2;
+            color: #175259;
+        }
+
+        /* ── body: list + reading pane ── */
+        .body {
+            flex: 1;
+            display: grid;
+            grid-template-columns: minmax(300px, 40%) 1fr;
+            min-height: 0;
+        }
+
+        .list {
+            overflow-y: auto;
+            border-right: 1px solid #eef1f4;
+        }
+
+        .row {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            transition: background .12s;
+        }
+
+        .row:hover {
+            background: #f9fafb;
+        }
+
+        .row.sel {
+            background: #eef6f7;
+            box-shadow: inset 3px 0 0 #175259;
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: #175259;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        .row-main {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .row-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            align-items: baseline;
+        }
+
+        .row-who {
+            font-weight: 600;
+            color: #111827;
+            font-size: 13.5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .row-date {
+            font-size: 11.5px;
+            color: #9ca3af;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .row-subj {
+            font-size: 13px;
+            color: #374151;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .row-sub2 {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .more {
+            padding: 14px;
+            text-align: center;
+        }
+
+        .btn {
+            height: 34px;
+            padding: 0 18px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            background: #fff;
+            color: #374151;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: #f3f4f6;
+        }
+
+        .btn:disabled {
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .btn.primary {
+            background: #175259;
+            color: #fff;
+            border-color: #175259;
+        }
+
+        .btn.primary:hover:not(:disabled) {
+            background: #0f3d42;
+        }
+
+        /* reading pane */
+        .read {
+            overflow-y: auto;
+            padding: 24px 28px;
+        }
+
+        .read-subj {
+            font-size: 20px;
+            font-weight: 600;
+            color: #111827;
+            line-height: 1.3;
+            letter-spacing: -0.01em;
+            margin-bottom: 18px;
+            word-break: break-word;
+        }
+
+        .meta {
+            display: grid;
+            grid-template-columns: 70px 1fr;
+            gap: 10px 12px;
+            font-size: 13px;
+            padding: 14px 16px;
+            background: #f9fafb;
+            border: 1px solid #eef1f4;
+            border-radius: 10px;
+        }
+
+        .meta .k {
+            color: #9ca3af;
+            font-weight: 500;
+        }
+
+        .meta .v {
+            color: #111827;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            word-break: break-all;
+        }
+
+        .chip {
+            background: #e8f1f2;
+            color: #0f3d42;
+            border-radius: 999px;
+            padding: 2px 10px;
+            font-size: 12.5px;
+        }
+
+        .chip.none {
+            background: none;
+            color: #9ca3af;
+            padding: 0;
+        }
+
+        .dir-tag {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        .dir-tag.sent {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .dir-tag.received {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        /* states */
+        .empty {
+            padding: 48px 20px;
+            text-align: center;
+            color: #9ca3af;
+            font-size: 13px;
+        }
+
+        .empty.err {
+            color: #b91c1c;
+        }
+
+        .read .empty {
+            padding-top: 110px;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #175259;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            animation: spin .8s linear infinite;
+            margin: 40px auto;
+        }
+
+        .tools {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #fff;
+            color: #374151;
+            cursor: pointer;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .icon-btn:hover {
+            background: #f3f4f6;
+            border-color: #175259;
+            color: #175259;
+        }
+
+        .icon-btn.spinning svg {
+            animation: spin .8s linear infinite;
+        }
+
+        /* inside the existing @media (max-width: 760px) */
+        .tools {
+            width: 100%;
+        }
+
+        .search {
+            flex: 1;
+            width: auto;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 760px) {
+            .body {
+                grid-template-columns: 1fr;
+            }
+
+            .list {
+                border-right: none;
+                max-height: 45vh;
+                border-bottom: 1px solid #eef1f4;
+            }
+
+            .search {
+                width: 100%;
+            }
+
+            .top {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="mail">
+            <div class="top">
+                <div class="title">Deal emails<span class="sub" id="sub">Loading…</span></div>
+                <div class="search">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="M21 21l-4.3-4.3" />
+                    </svg>
+                    <input id="search" type="text" placeholder="Search loaded mails" autocomplete="off">
+                </div>
+                <button class="icon-btn" id="refresh-btn" type="button" title="Refresh" aria-label="Refresh">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+                        <path d="M21 3v5h-5" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="tabs">
+                <button class="tab active" data-tab="sent">Sent <span class="badge" id="cnt-sent">–</span></button>
+                <button class="tab" data-tab="received">Received <span class="badge" id="cnt-received">–</span></button>
+            </div>
+
+            <div class="body">
+                <div class="list" id="list">
+                    <div class="loader"></div>
+                </div>
+                <div class="read" id="read">
+                    <div class="empty">Select a mail to read its details</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // CONFIG
+        // ═══════════════════════════════════════════════════════════════
+        const BASE_URL = 'https://app.superleap.com';
+        const API_URL = BASE_URL + '/api/v1/reports/execute';
+        const ME_URL = BASE_URL + '/api/v1/org/user/me';
+
+        const CLIENT_ID = 'superleapweb';
+        const CLIENT_SECRET = 'UEAlm1PWab8VXB5b';   // same as the other dashboards — confirm prod value
+
+        // ⚠ Confirm these against your org schema
+        const EMAIL_OBJECT_SLUG = 'email';          // slug of the email object
+        const F = {
+            deal: 'email_deals',
+            direction: 'direction',
+            from: 'from_email',
+            to: 'recipient_email',
+            cc: 'cc',
+            bcc: 'bcc',
+            sentAt: 'sent_at',
+            subject: 'subject',
+        };
+        // Values stored in the `direction` field (matched case-insensitively)
+        const DIR_SENT = 'sent';
+        const DIR_RECEIVED = 'received';
+
+        const PAGE_SIZE = 50;
+
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token') || params.get('authToken');
+        const dealId = params.get('id') || params.get('dealId') || params.get('deal_id');
+
+        // ═══════════════════════════════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════════════════════════════
+        const mk = () => ({ rows: [], offset: 0, done: false, loading: false, error: '', loaded: false });
+        const state = {
+            me: null,                 // { id, email, name }
+            tab: 'sent',
+            search: '',
+            selected: null,           // row id
+            data: { sent: mk(), received: mk() },
+        };
+
+        const $ = id => document.getElementById(id);
+
+        // ═══════════════════════════════════════════════════════════════
+        // API HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        async function safe(fn, retries = 3) {
+            let lastErr;
+            for (let i = 0; i < retries; i++) {
+                try { return await fn(); }
+                catch (e) { lastErr = e; if (i < retries - 1) await sleep(600 * (i + 1)); }
+            }
+            throw lastErr;
+        }
+        async function query(q, slug) {
+            return safe(async () => {
+                const r = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ query: q, slug })
+                });
+                if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+                const j = await r.json();
+                if (!j.success) throw new Error(j.data?.message || 'API error');
+                return j.data.records || [];
+            });
+        }
+        const sqlStr = v => `'${String(v).replace(/'/g, "''")}'`;
+
+        async function loadMe() {
+            const r = await fetch(ME_URL, {
+                headers: { 'Authorization': `Bearer ${token}`, 'client-id': CLIENT_ID, 'client-secret': CLIENT_SECRET }
+            });
+            if (!r.ok) throw new Error(`Could not load current user (HTTP ${r.status})`);
+            const d = (await r.json())?.data || {};
+            if (!d.user_id || !d.email) throw new Error('Could not identify the current user');
+            return { id: d.user_id, email: String(d.email).trim().toLowerCase(), name: d.name || '' };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // QUERY BUILDER  (deal from URL + current user's email only)
+        // ═══════════════════════════════════════════════════════════════
+
+        // ⚠ Set this to whichever expression passed your curl test (A is the default guess)
+        const emailMatch = (col, email) => `${col}::text ILIKE ${sqlStr('%' + email.replace(/[%_]/g, '') + '%')}`;
+        // B: `CAST(${col} AS TEXT) ILIKE ...`
+        // C: `${sqlStr(email)} = ANY(${col})`
+        // D: `${col} @> ARRAY[${sqlStr(email)}]`
+
+        function whereFor(tab) {
+            const base = `${F.deal} = ${sqlStr(dealId)}`;
+            if (tab === 'sent') {
+                return `${base} AND ${F.direction} ILIKE ${sqlStr(DIR_SENT)} AND ${F.from} ILIKE ${sqlStr(state.me.email)}`;
+            }
+            const me = state.me.email;
+            const mine = [F.to, F.cc, F.bcc].map(col => emailMatch(col, me)).join(' OR ');
+            return `${base} AND ${F.direction} ILIKE ${sqlStr(DIR_RECEIVED)} AND (${mine})`;
+        }
+
+
+
+
+
+        async function fetchPage(tab) {
+            const d = state.data[tab];
+            const q = `SELECT id, ${F.direction} as direction, ${F.from} as from_email, ${F.to} as recipient_email, ` +
+                `${F.cc} as cc, ${F.bcc} as bcc, ${F.sentAt} as sent_at, ${F.subject} as subject ` +
+                `FROM ${EMAIL_OBJECT_SLUG} WHERE ${whereFor(tab)} ORDER BY ${F.sentAt} DESC ` +
+                `LIMIT ${PAGE_SIZE} OFFSET ${d.offset}`;
+            return query(q, EMAIL_OBJECT_SLUG);
+        }
+
+        // list fields may arrive as an array or a comma-separated string
+        // pulls every address out of the value: arrays, "a@x.com, b@x.com" and "Name <a@x.com>" all work
+        const asList = v => {
+            const raw = Array.isArray(v) ? v.join(',') : String(v ?? '');
+            return (raw.match(/[^\s<>,;"']+@[^\s<>,;"']+/g) || []).map(s => s.toLowerCase());
+        };
+
+        const isMine = r => {
+            const me = state.me.email;
+            return asList(r.recipient_email).includes(me) || asList(r.cc).includes(me) || asList(r.bcc).includes(me);
+        };
+
+        async function loadTab(tab) {
+            const d = state.data[tab];
+            if (d.loading || d.done) return;
+            d.loading = true; d.error = '';
+            render();
+            try {
+                let kept = 0;
+                while (!d.done && kept < PAGE_SIZE) {
+                    const rows = await fetchPage(tab);
+                    if (state.data[tab] !== d) return;      // tab was reloaded meanwhile, drop the stale result
+                    d.offset += rows.length;
+                    if (rows.length < PAGE_SIZE) d.done = true;
+                    const mine = tab === 'sent' ? rows : rows.filter(isMine);
+                    d.rows = d.rows.concat(mine);
+                    kept += mine.length;
+                    if (tab === 'sent') break;
+                }
+                d.loaded = true;
+            } catch (e) {
+                if (state.data[tab] !== d) return;
+                console.error(e);
+                d.error = e.message;
+            } finally {
+                if (state.data[tab] === d) { d.loading = false; render(); }
+            }
+        }
+
+        // wipe the tab's data and query again from page 1
+        function reloadTab(tab) {
+            state.data[tab] = mk();
+            if (tab === state.tab) state.selected = null;
+            return loadTab(tab);
+        }
+
+
+
+
+        // ═══════════════════════════════════════════════════════════════
+        // FORMAT HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+        function toDate(v) {
+            if (v == null || v === '') return null;
+            const d = /^\d+$/.test(String(v)) ? new Date(Number(v)) : new Date(v);
+            return isNaN(d) ? null : d;
+        }
+        function fmtShort(v) {
+            const d = toDate(v); if (!d) return '—';
+            const opt = { timeZone: 'Asia/Kolkata' };
+            const day = d.toLocaleDateString('en-CA', opt);
+            const today = new Date().toLocaleDateString('en-CA', opt);
+            if (day === today) return d.toLocaleTimeString('en-IN', { ...opt, hour: 'numeric', minute: '2-digit', hour12: true });
+            return d.toLocaleDateString('en-IN', { ...opt, day: 'numeric', month: 'short', year: '2-digit' });
+        }
+        function fmtFull(v) {
+            const d = toDate(v); if (!d) return '—';
+            return d.toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) + ' IST';
+        }
+        const splitEmails = v => Array.isArray(v)
+            ? v.map(s => String(s).trim()).filter(Boolean)
+            : String(v ?? '').split(/[,;]+/).map(s => s.trim()).filter(Boolean);
+        const firstOf = v => splitEmails(v)[0] || '';
+        const initial = s => (String(s).replace(/[^a-z0-9]/gi, '')[0] || '?');
+
+        // ═══════════════════════════════════════════════════════════════
+        // RENDER
+        // ═══════════════════════════════════════════════════════════════
+        function visibleRows(tab) {
+            const q = state.search.trim().toLowerCase();
+            const rows = state.data[tab].rows;
+            if (!q) return rows;
+            return rows.filter(r => [r.subject, r.from_email, r.recipient_email, r.cc, r.bcc]
+                .some(x => String(x ?? '').toLowerCase().includes(q)));
+        }
+
+        function renderCounts() {
+            ['sent', 'received'].forEach(t => {
+                const d = state.data[t];
+                $('cnt-' + t).textContent = !d.loaded ? '–' : (d.rows.length + (d.done ? '' : '+'));
+            });
+        }
+
+        function renderList() {
+            const tab = state.tab, d = state.data[tab], list = $('list');
+            if (!d.loaded && d.loading) { list.innerHTML = '<div class="loader"></div>'; return; }
+            if (d.error && !d.rows.length) { list.innerHTML = `<div class="empty err">Could not load mails.<br>${esc(d.error)}</div>`; return; }
+
+            const rows = visibleRows(tab);
+            if (!rows.length) {
+                list.innerHTML = `<div class="empty">${state.search ? 'No mails match your search.' : `No ${tab} mails for this deal.`}</div>` + moreHtml(d);
+                return;
+            }
+            list.innerHTML = rows.map(r => {
+                // sent → show who it went to; received → show who it came from
+                const who = tab === 'sent' ? (firstOf(r.recipient_email) || '(no recipient)') : (r.from_email || '(unknown sender)');
+                const extra = tab === 'sent' ? splitEmails(r.recipient_email).length - 1 : 0;
+                return `<div class="row ${r.id === state.selected ? 'sel' : ''}" data-id="${esc(r.id)}">
+                    <div class="avatar">${esc(initial(who))}</div>
+                    <div class="row-main">
+                        <div class="row-top">
+                            <div class="row-who">${tab === 'sent' ? 'To: ' : ''}${esc(who)}${extra > 0 ? ` +${extra}` : ''}</div>
+                            <div class="row-date">${esc(fmtShort(r.sent_at))}</div>
+                        </div>
+                        <div class="row-subj">${esc(r.subject || '(no subject)')}</div>
+                    </div>
+                </div>`;
+            }).join('') + moreHtml(d);
+        }
+
+        function moreHtml(d) {
+            if (d.error && d.rows.length) return `<div class="more"><div style="color:#b91c1c;font-size:12px;margin-bottom:8px">${esc(d.error)}</div><button class="btn" id="more-btn">Retry</button></div>`;
+            if (d.done) return '';
+            return `<div class="more"><button class="btn" id="more-btn" ${d.loading ? 'disabled' : ''}>${d.loading ? 'Loading…' : 'Load more'}</button></div>`;
+        }
+
+        const chips = v => {
+            const a = splitEmails(v);
+            return a.length ? a.map(e => `<span class="chip">${esc(e)}</span>`).join('') : '<span class="chip none">—</span>';
+        };
+
+        function renderRead() {
+            const r = state.data[state.tab].rows.find(x => x.id === state.selected);
+            if (!r) { $('read').innerHTML = '<div class="empty">Select a mail to read its details</div>'; return; }
+            const dir = String(r.direction || state.tab).toLowerCase();
+            $('read').innerHTML = `
+                <div class="read-subj">${esc(r.subject || '(no subject)')}</div>
+                <div class="meta">
+                    <div class="k">Type</div><div class="v"><span class="dir-tag ${dir === 'sent' ? 'sent' : 'received'}">${dir === 'sent' ? 'Sent' : 'Received'}</span></div>
+                    <div class="k">From</div><div class="v">${chips(r.from_email)}</div>
+                    <div class="k">To</div><div class="v">${chips(r.recipient_email)}</div>
+                    <div class="k">Cc</div><div class="v">${chips(r.cc)}</div>
+                    <div class="k">Bcc</div><div class="v">${chips(r.bcc)}</div>
+                    <div class="k">Sent at</div><div class="v">${esc(fmtFull(r.sent_at))}</div>
+                </div>`;
+        }
+
+        function render() {
+            renderCounts();
+            renderList();
+            renderRead();
+            $('refresh-btn').classList.toggle('spinning', state.data.sent.loading || state.data.received.loading);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // EVENTS
+        // ═══════════════════════════════════════════════════════════════
+        function switchTab(tab) {
+            state.tab = tab;
+            state.selected = null;
+            document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+            reloadTab(tab);          // every click on Sent / Received hits the API again
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.querySelector('.tabs').addEventListener('click', e => {
+                const t = e.target.closest('.tab'); if (t) switchTab(t.dataset.tab);
+            });
+            $('search').addEventListener('input', e => { state.search = e.target.value; renderList(); });
+            $('list').addEventListener('click', e => {
+                if (e.target.closest('#more-btn')) { loadTab(state.tab); return; }
+                const row = e.target.closest('.row'); if (!row) return;
+                state.selected = row.dataset.id;
+                renderList(); renderRead();
+            });
+            $('refresh-btn').addEventListener('click', () => {
+                reloadTab(state.tab);
+                reloadTab(state.tab === 'sent' ? 'received' : 'sent');   // keeps both counts fresh
+            });
+
+            if (!token || !dealId) {
+                $('sub').textContent = '';
+                $('list').innerHTML = `<div class="empty err">${!token ? 'Missing auth token in the URL (?token=…).' : 'Missing deal id in the URL (?id=…).'}</div>`;
+                return;
+            }
+
+            try {
+                state.me = await loadMe();
+            } catch (e) {
+                $('sub').textContent = '';
+                $('list').innerHTML = `<div class="empty err">${esc(e.message)}</div>`;
+                return;
+            }
+
+            $('sub').textContent = `Showing mails for ${state.me.email}`;
+            // load both tabs so both counts are populated up front
+            const other = state.tab === 'sent' ? 'received' : 'sent';
+            await Promise.all([reloadTab(state.tab), reloadTab(other)]);
+        });
+    </script>
+</body>
+
+</html>

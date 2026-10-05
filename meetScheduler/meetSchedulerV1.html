@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        window.onerror = function (m, s, l, c, e) { window.parent.postMessage({ type: 'dashboard-error', error: { message: m, source: s, line: l, stack: e?.stack } }, '*'); return false; };
+        window.addEventListener('unhandledrejection', e => { window.parent.postMessage({ type: 'dashboard-error', error: { message: 'Unhandled Promise Rejection', reason: e.reason?.message || String(e.reason) } }, '*'); });
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Schedule a video meet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: transparent;
+            color: #1f2937;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button,
+        input,
+        select {
+            font-family: inherit;
+        }
+
+        .wrap {
+            padding: 24px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .modal {
+            width: 100%;
+            max-width: 700px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            box-shadow: 0 8px 28px rgba(16, 24, 40, .10);
+            padding: 30px 32px 28px;
+        }
+
+        /* ── header ── */
+        .hd {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 26px;
+        }
+
+        .title {
+            font-size: 21px;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: #374151;
+            line-height: 1.3;
+        }
+
+        .title .skel {
+            display: inline-block;
+            width: 160px;
+            height: 18px;
+            border-radius: 4px;
+            background: #eef0f2;
+            vertical-align: middle;
+        }
+
+        /* ── fields ── */
+        .field {
+            margin-bottom: 22px;
+        }
+
+        .label {
+            display: block;
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+
+        .input {
+            width: 100%;
+            height: 46px;
+            padding: 0 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #fff;
+            font-size: 15px;
+            color: #111827;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .input::placeholder {
+            color: #9ca3af;
+        }
+
+        .input:focus {
+            border-color: #374151;
+            box-shadow: 0 0 0 3px rgba(55, 65, 81, .10);
+        }
+
+        .input.invalid {
+            border-color: #ef4444;
+        }
+
+        /* ── when cards ── */
+        .when {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .when-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #fff;
+            padding: 16px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color .15s;
+        }
+
+        .when-card:hover {
+            border-color: #9ca3af;
+        }
+
+        .when-card.active {
+            border: 1.5px solid #111827;
+            padding: 15.5px 11.5px;
+        }
+
+        .when-card .t {
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .when-card .s {
+            font-size: 15px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* ── time row ── */
+        .time-row {
+            display: grid;
+            grid-template-columns: 1.85fr 1fr 0.65fr;
+            gap: 14px;
+        }
+
+        @media (max-width: 560px) {
+            .time-row {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .ampm {
+                grid-column: 1 / -1;
+            }
+        }
+
+        .date-box {
+            position: relative;
+        }
+
+        .date-box .input {
+            padding-right: 44px;
+        }
+
+        .cal-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #374151;
+            padding: 6px;
+            line-height: 0;
+            border-radius: 6px;
+        }
+
+        .cal-btn:hover,
+        .cal-btn[aria-expanded="true"] {
+            background: #eef4f5;
+            color: #175259;
+        }
+
+        /* ── custom calendar popover ── */
+        .cal-pop {
+            position: absolute;
+            left: 0;
+            width: 304px;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(16, 24, 40, .16);
+            padding: 14px;
+            z-index: 50;
+            bottom: calc(100% + 6px);
+        }
+
+        .cal-pop.down {
+            bottom: auto;
+            top: calc(100% + 6px);
+        }
+
+        .cal-pop[hidden] {
+            display: none;
+        }
+
+        .cal-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .cal-month {
+            font-size: 15px;
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .cal-nav {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: none;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cal-nav:hover:not(:disabled) {
+            background: #f3f4f6;
+        }
+
+        .cal-nav:disabled {
+            color: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .cal-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+        }
+
+        .cal-dow {
+            font-size: 12px;
+            font-weight: 500;
+            color: #9ca3af;
+            text-align: center;
+            padding: 6px 0;
+        }
+
+        .cal-day {
+            height: 38px;
+            border: 1px solid transparent;
+            background: none;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #111827;
+            cursor: pointer;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .cal-day:hover:not(:disabled):not(.sel) {
+            background: #eef4f5;
+        }
+
+        .cal-day.today {
+            border-color: #175259;
+            color: #175259;
+            font-weight: 600;
+        }
+
+        .cal-day.sel {
+            background: #175259;
+            border-color: #175259;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .cal-day:disabled {
+            color: #d1d5db;
+            cursor: not-allowed;
+        }
+
+        .cal-foot {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f1f3;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .cal-link {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #175259;
+            padding: 4px 6px;
+            border-radius: 6px;
+        }
+
+        .cal-link:hover {
+            background: #eef4f5;
+        }
+
+        .cal-link.muted {
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .select-box {
+            position: relative;
+        }
+
+        .select-box select {
+            appearance: none;
+            -webkit-appearance: none;
+            padding-right: 40px;
+            cursor: pointer;
+        }
+
+        .select-box select.empty {
+            color: #9ca3af;
+        }
+
+        .select-box svg {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+            color: #374151;
+        }
+
+        .ampm {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            height: 46px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .ampm button {
+            border: none;
+            background: #fff;
+            color: #6b7280;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        .ampm button.on {
+            background: #eef0f3;
+            color: #111827;
+            font-weight: 600;
+        }
+
+        .time-row[hidden],
+        .field[hidden] {
+            display: none;
+        }
+
+        /* ── footer ── */
+        .foot {
+            border-top: 1px solid #e5e7eb;
+            margin-top: 28px;
+            padding-top: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .msg {
+            font-size: 13px;
+            line-height: 1.45;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .msg.err {
+            color: #b91c1c;
+        }
+
+        .msg.ok {
+            color: #166534;
+        }
+
+        .msg a {
+            color: inherit;
+            font-weight: 600;
+            word-break: break-all;
+        }
+
+        .btn {
+            height: 42px;
+            padding: 0 30px;
+            border: none;
+            border-radius: 6px;
+            background: #175259;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: #0f3d42;
+        }
+
+        .btn:disabled {
+            background: #9ca3a5;
+            cursor: not-allowed;
+        }
+
+        .spin {
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, .4);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .7s linear infinite;
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 6px;
+            min-height: 46px;
+            padding: 6px 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #fff;
+            cursor: text;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .chips:focus-within {
+            border-color: #374151;
+            box-shadow: 0 0 0 3px rgba(55, 65, 81, .10);
+        }
+
+        .chips.invalid {
+            border-color: #ef4444;
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: #eef4f5;
+            color: #0f3d42;
+            border-radius: 999px;
+            padding: 4px 6px 4px 12px;
+            font-size: 13px;
+        }
+
+        .chip button {
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: #175259;
+            font-size: 16px;
+            line-height: 1;
+            padding: 0 4px;
+            border-radius: 50%;
+        }
+
+        .chip button:hover {
+            background: #d6e7e9;
+        }
+
+        .chip-input {
+            flex: 1;
+            min-width: 160px;
+            height: 32px;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 15px;
+        }
+
+        .chip-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 6px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .spin {
+                animation-duration: 2s;
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@superleapai/flow-ui@2.7.2/dist/superleap-flow.min.js"></script>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="modal" role="dialog" aria-labelledby="title">
+            <div class="hd">
+                <div class="title" id="title"><span class="skel"></span></div>
+            </div>
+
+            <div class="field">
+                <label class="label" for="meet-title">Title</label>
+                <input class="input" id="meet-title" type="text" placeholder="e.g. Counselling session" maxlength="200"
+                    autocomplete="off">
+            </div>
+
+            <div class="field">
+                <label class="label" for="guest-email">Email id(s)</label>
+                <div class="chips" id="chips">
+                    <input class="chip-input" id="guest-email" type="text" placeholder="name@example.com"
+                        autocomplete="off">
+                </div>
+                <div class="hint">Separate multiple emails with a comma or Enter</div>
+            </div>
+
+            <div class="field">
+                <span class="label">When</span>
+                <div class="when">
+                    <div class="when-card" id="when-now" role="button" tabindex="0">
+                        <div class="t">Right now</div>
+                        <div class="s" id="now-label">Now</div>
+                    </div>
+                    <div class="when-card active" id="when-later" role="button" tabindex="0">
+                        <div class="t">Schedule for later</div>
+                        <div class="s">Select date &amp; time</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="field" id="time-field">
+                <span class="label">Time</span>
+                <div class="time-row">
+                    <div class="date-box">
+                        <input class="input" id="date-text" type="text" inputmode="numeric" placeholder="DD/MM/YYYY"
+                            maxlength="10" autocomplete="off">
+                        <button class="cal-btn" id="cal-btn" type="button" aria-label="Pick a date"
+                            aria-expanded="false">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+                                <path d="M3.5 10h17M8 3v4M16 3v4M12 13.5v4" />
+                            </svg>
+                        </button>
+                        <div class="cal-pop" id="cal-pop" hidden></div>
+                    </div>
+                    <div class="select-box">
+                        <select class="input empty" id="time-select" aria-label="Time (HH:MM)">
+                            <option value="">HH:MM</option>
+                        </select>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6 9l6 6 6-6" />
+                        </svg>
+                    </div>
+                    <div class="ampm" id="ampm">
+                        <button type="button" data-v="AM">AM</button>
+                        <button type="button" data-v="PM" class="on">PM</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="foot">
+                <div class="msg" id="msg"></div>
+                <button class="btn" id="book-btn" disabled>Book video call</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // CONFIG
+        // ═══════════════════════════════════════════════════════════════
+        const BASE_URL = 'https://app.superleap.com';
+        const API_URL = BASE_URL + '/api/v1/reports/execute';
+        const ME_URL = BASE_URL + '/api/v1/org/user/me';
+        const WEBHOOK_URL = 'https://v1hooks.superleap.com/5aZNph/5aZNph_XJkV0ylcnxCssgMY1Hi6/sync';
+
+        const CLIENT_ID = 'superleapweb';
+        const CLIENT_SECRET = 'UEAlm1PWab8VXB5b';   // same as the funnel dashboard — confirm prod value
+
+        // ⚠ Confirm this slug for the deals object in your org
+        const DEAL_OBJECT_SLUG = 'deals';
+        const DEAL_CAMPAIGN_FIELD = 'campaign_name';
+
+        const TIME_ZONE = 'Asia/Kolkata';
+        const IST_MS = 5.5 * 60 * 60 * 1000;
+        const MEET_DURATION_MIN = 30;
+        const IDEMPOTENCY_PREFIX = 'media-ant-video-counselling';
+
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token');
+        const dealId = params.get('id');
+
+        // ═══════════════════════════════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════════════════════════════
+        const state = {
+            mode: 'later',          // 'now' | 'later'
+            ampm: 'PM',
+            me: null,               // { id, email, name }
+            campaignName: '',
+            submitting: false,
+        };
+
+        const $ = id => document.getElementById(id);
+
+        // ═══════════════════════════════════════════════════════════════
+        // CRM BRIDGE (Superleap Flow UI)
+        // closeForm() only works after connect() has completed, so connect once
+        // on startup and make closeCRMForm() wait for it.
+        // ═══════════════════════════════════════════════════════════════
+        let bridgeConnected = false;
+
+        async function waitForSuperLeap(maxWait = 5000, interval = 100) {
+            for (let elapsed = 0; elapsed < maxWait; elapsed += interval) {
+                if (window.SuperLeap) return true;
+                await new Promise(r => setTimeout(r, interval));
+            }
+            return false;
+        }
+
+        const bridgeReady = (async () => {
+            if (!(await waitForSuperLeap()) || typeof SuperLeap.connect !== 'function') return null;
+            try {
+                const { context } = await SuperLeap.connect({ flowId: 'sample-request', timeout: 3000 });
+                bridgeConnected = true;
+                return context;
+            } catch (err) {
+                console.log('[bridge] not available, running standalone:', err.message);
+                return null;
+            }
+        })();
+
+        async function closeCRMForm() {
+            await bridgeReady;
+            if (!bridgeConnected || typeof SuperLeap.closeForm !== 'function') {
+                console.warn('[bridge] closeForm skipped: bridge not connected');
+                return;
+            }
+            try { SuperLeap.closeForm(); }
+            catch (e) { console.log('[bridge] closeForm error:', e.message); }
+        }
+
+        // Toast through the host app. Needs the bridge, so it waits for connect() like closeCRMForm().
+        // type: 'success' | 'error'
+        async function showToast(message, type) {
+            await bridgeReady;
+            if (!bridgeConnected || typeof SuperLeap.toast !== 'function') return;   // inline message still shows
+            try { SuperLeap.toast(message, type); }
+            catch (e) { console.log('[bridge] toast error:', e.message); }
+        }
+
+
+
+
+        // ═══════════════════════════════════════════════════════════════
+        // IST HELPERS  (everything is computed in IST, independent of the browser timezone)
+        // ═══════════════════════════════════════════════════════════════
+        const pad = n => String(n).padStart(2, '0');
+
+        // epoch ms -> "YYYY-MM-DDTHH:mm:00+05:30"
+        function toISTString(epoch) {
+            const d = new Date(epoch + IST_MS);   // shift, then read with UTC getters
+            return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}` +
+                `T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:00+05:30`;
+        }
+        // IST wall-clock parts -> epoch ms
+        const istToEpoch = (y, mo, d, h, mi) => Date.UTC(y, mo - 1, d, h, mi) - IST_MS;
+
+        function floorToMinute(epoch) { return Math.floor(epoch / 60000) * 60000; }
+
+        function istTodayParts() {
+            const d = new Date(Date.now() + IST_MS);
+            return { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate() };
+        }
+
+        function nowLabel() {
+            const s = new Date().toLocaleString('en-IN', {
+                timeZone: TIME_ZONE, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true
+            });
+            // "30 Sept, 9:05 pm" -> "Sep 30, 9:05 PM"
+            const dt = new Date();
+            const mon = dt.toLocaleString('en-US', { timeZone: TIME_ZONE, month: 'short' });
+            const day = dt.toLocaleString('en-US', { timeZone: TIME_ZONE, day: 'numeric' });
+            const tm = dt.toLocaleString('en-US', { timeZone: TIME_ZONE, hour: 'numeric', minute: '2-digit', hour12: true });
+            return `Now, ${mon} ${day}, ${tm}`;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // API HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        async function safe(fn, retries = 3) {
+            let lastErr;
+            for (let i = 0; i < retries; i++) {
+                try { return await fn(); }
+                catch (e) { lastErr = e; if (i < retries - 1) await sleep(600 * (i + 1)); }
+            }
+            throw lastErr;
+        }
+        async function query(q, slug) {
+            return safe(async () => {
+                const r = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ query: q, slug })
+                });
+                if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+                const j = await r.json();
+                if (!j.success) throw new Error(j.data?.message || 'API error');
+                return j.data.records || [];
+            });
+        }
+        const sqlStr = v => `'${String(v).replace(/'/g, "''")}'`;
+
+        async function loadMe() {
+            const r = await fetch(ME_URL, {
+                headers: { 'Authorization': `Bearer ${token}`, 'client-id': CLIENT_ID, 'client-secret': CLIENT_SECRET }
+            });
+            if (!r.ok) throw new Error(`Could not load current user (HTTP ${r.status})`);
+            const d = (await r.json())?.data || {};
+            if (!d.user_id) throw new Error('Could not identify the current user');
+            return { id: d.user_id, email: d.email || '', name: d.name || '' };
+        }
+
+        async function loadCampaignName() {
+            const rows = await query(
+                `SELECT id, ${DEAL_CAMPAIGN_FIELD} as campaign_name FROM ${DEAL_OBJECT_SLUG} WHERE id = ${sqlStr(dealId)} LIMIT 1 OFFSET 0`,
+                DEAL_OBJECT_SLUG);
+            return rows[0]?.campaign_name || '';
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // UI HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        function setMsg(text, kind, html) {
+            const el = $('msg');
+            el.className = 'msg' + (kind ? ' ' + kind : '');
+            if (html) el.innerHTML = html; else el.textContent = text || '';
+        }
+
+        function setTitle() {
+            $('title').textContent = state.campaignName
+                ? `Schedule a video meet for ${state.campaignName}`
+                : 'Schedule a video meet';
+        }
+
+        function buildTimeOptions() {
+            // 12-hour slots in 5-minute steps: 01:00 … 12:55
+            const sel = $('time-select');
+            const hours = [12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+            const opts = [];
+            hours.forEach(h => { for (let m = 0; m < 60; m += 5) opts.push(`${pad(h)}:${pad(m)}`); });
+            opts.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; sel.appendChild(o); });
+        }
+
+        function setMode(mode) {
+            state.mode = mode;
+            $('when-now').classList.toggle('active', mode === 'now');
+            $('when-later').classList.toggle('active', mode === 'later');
+            $('time-field').hidden = mode === 'now';
+            if (mode === 'now') $('now-label').textContent = nowLabel();
+            validate();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // CUSTOM CALENDAR  (IST "today", past days disabled)
+        // ═══════════════════════════════════════════════════════════════
+        const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        const cal = { y: 0, m: 0 };   // month being viewed (m is 0-11)
+        const dayKey = (y, m1, d) => y * 10000 + m1 * 100 + d;
+
+        function calSelected() {
+            const dp = parseDate($('date-text').value);
+            return dp ? dayKey(dp.y, dp.mo, dp.d) : null;
+        }
+
+        function renderCalendar() {
+            const t = istTodayParts(), todayK = dayKey(t.y, t.m, t.d), selK = calSelected();
+            const firstDow = new Date(Date.UTC(cal.y, cal.m, 1)).getUTCDay();
+            const dim = new Date(Date.UTC(cal.y, cal.m + 1, 0)).getUTCDate();
+            const atMin = cal.y * 12 + cal.m <= t.y * 12 + (t.m - 1);
+
+            let cells = DOW.map(d => `<div class="cal-dow">${d}</div>`).join('');
+            for (let i = 0; i < firstDow; i++) cells += '<div></div>';
+            for (let d = 1; d <= dim; d++) {
+                const k = dayKey(cal.y, cal.m + 1, d);
+                const cls = ['cal-day', k === todayK ? 'today' : '', k === selK ? 'sel' : ''].filter(Boolean).join(' ');
+                cells += `<button type="button" class="${cls}" data-d="${d}" ${k < todayK ? 'disabled' : ''}>${d}</button>`;
+            }
+            const chev = dir => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${dir < 0 ? 'M15 6l-6 6 6 6' : 'M9 6l6 6-6 6'}"/></svg>`;
+            $('cal-pop').innerHTML = `
+                <div class="cal-head">
+                    <button type="button" class="cal-nav" data-nav="-1" aria-label="Previous month" ${atMin ? 'disabled' : ''}>${chev(-1)}</button>
+                    <div class="cal-month">${MONTHS[cal.m]} ${cal.y}</div>
+                    <button type="button" class="cal-nav" data-nav="1" aria-label="Next month">${chev(1)}</button>
+                </div>
+                <div class="cal-grid">${cells}</div>
+                <div class="cal-foot">
+                    <button type="button" class="cal-link" data-today="1">Today</button>
+                    <button type="button" class="cal-link muted" data-clear="1">Clear</button>
+                </div>`;
+        }
+
+        function openCalendar() {
+            const t = istTodayParts();
+            const dp = parseDate($('date-text').value);
+            const base = dp && dayKey(dp.y, dp.mo, dp.d) >= dayKey(t.y, t.m, t.d) ? { y: dp.y, m: dp.mo - 1 } : { y: t.y, m: t.m - 1 };
+            cal.y = base.y; cal.m = base.m;
+            renderCalendar();
+            const pop = $('cal-pop');
+            // open upwards by default; flip down if there isn't room above (small iframe)
+            const box = $('date-text').getBoundingClientRect();
+            pop.classList.toggle('down', box.top < 340);
+            pop.hidden = false;
+            $('cal-btn').setAttribute('aria-expanded', 'true');
+        }
+        function closeCalendar() {
+            $('cal-pop').hidden = true;
+            $('cal-btn').setAttribute('aria-expanded', 'false');
+        }
+        function pickDate(y, m1, d) {
+            $('date-text').value = `${pad(d)}/${pad(m1)}/${y}`;
+            closeCalendar();
+            validate();
+        }
+
+        function initCalendar() {
+            $('cal-btn').addEventListener('click', e => {
+                e.stopPropagation();
+                $('cal-pop').hidden ? openCalendar() : closeCalendar();
+            });
+            $('cal-pop').addEventListener('click', e => {
+                e.stopPropagation();
+                const day = e.target.closest('[data-d]');
+                const nav = e.target.closest('[data-nav]');
+                if (day && !day.disabled) return pickDate(cal.y, cal.m + 1, +day.dataset.d);
+                if (nav && !nav.disabled) {
+                    cal.m += +nav.dataset.nav;
+                    if (cal.m < 0) { cal.m = 11; cal.y--; } else if (cal.m > 11) { cal.m = 0; cal.y++; }
+                    return renderCalendar();
+                }
+                if (e.target.closest('[data-today]')) { const t = istTodayParts(); return pickDate(t.y, t.m, t.d); }
+                if (e.target.closest('[data-clear]')) { $('date-text').value = ''; closeCalendar(); validate(); }
+            });
+            document.addEventListener('click', closeCalendar);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCalendar(); });
+            // typing a valid date keeps the open calendar in sync
+            $('date-text').addEventListener('input', () => { if (!$('cal-pop').hidden) renderCalendar(); });
+        }
+
+
+
+        const emails = [];   // committed attendees
+
+        function renderChips() {
+            const box = $('chips'), input = $('guest-email');
+            box.querySelectorAll('.chip').forEach(c => c.remove());
+            emails.forEach((em, i) => {
+                const c = document.createElement('span'); c.className = 'chip'; c.textContent = em;
+                const b = document.createElement('button');
+                b.type = 'button'; b.dataset.i = i; b.textContent = '×'; b.setAttribute('aria-label', 'Remove ' + em);
+                c.appendChild(b); box.insertBefore(c, input);
+            });
+        }
+
+        // move valid emails from the input into chips; invalid text stays in the input
+        function commitEmails() {
+            const input = $('guest-email');
+            const parts = input.value.split(/[,;\s]+/).map(s => s.trim().toLowerCase()).filter(Boolean);
+            const bad = [];
+            parts.forEach(p => {
+                if (!EMAIL_RE.test(p)) bad.push(p);
+                else if (!emails.includes(p)) emails.push(p);
+            });
+            input.value = bad.join(', ');
+            $('chips').classList.toggle('invalid', bad.length > 0);
+            renderChips();
+            validate();
+        }
+
+        // committed chips + a valid email still sitting in the input (not yet committed)
+        function currentEmails() {
+            const pend = $('guest-email').value.trim().toLowerCase();
+            return (pend && EMAIL_RE.test(pend) && !emails.includes(pend)) ? [...emails, pend] : [...emails];
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // VALIDATION / TIME RESOLUTION
+        // ═══════════════════════════════════════════════════════════════
+        const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+        function parseDate(txt) {
+            const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(txt.trim());
+            if (!m) return null;
+            const d = +m[1], mo = +m[2], y = +m[3];
+            const chk = new Date(Date.UTC(y, mo - 1, d));
+            if (chk.getUTCFullYear() !== y || chk.getUTCMonth() !== mo - 1 || chk.getUTCDate() !== d) return null;
+            return { y, mo, d };
+        }
+
+        // Returns { startEpoch } or { error }
+        function resolveStart() {
+            if (state.mode === 'now') return { startEpoch: floorToMinute(Date.now()) };
+            const dp = parseDate($('date-text').value);
+            const tv = $('time-select').value;
+            if (!dp || !tv) return { error: 'incomplete' };
+            let [h, mi] = tv.split(':').map(Number);
+            if (state.ampm === 'AM') h = h === 12 ? 0 : h;
+            else h = h === 12 ? 12 : h + 12;
+            const startEpoch = istToEpoch(dp.y, dp.mo, dp.d, h, mi);
+            if (startEpoch < Date.now() - 60000) return { error: 'past' };
+            return { startEpoch };
+        }
+
+        function validate() {
+            const titleOk = $('meet-title').value.trim().length > 0;
+            const pend = $('guest-email').value.trim();
+            const emailOk = currentEmails().length > 0 && !(pend && !EMAIL_RE.test(pend.toLowerCase()));
+            const start = resolveStart();
+            const ready = titleOk && emailOk && !start.error && !!state.me && !!dealId && !state.submitting;
+            $('book-btn').disabled = !ready;
+            if (start.error === 'past' && !state.submitting) setMsg('Pick a date and time in the future (IST).', 'err');
+            else if ($('msg').classList.contains('err') && $('msg').dataset.sticky !== '1') setMsg('');
+            return ready;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SUBMIT
+        // ═══════════════════════════════════════════════════════════════
+        function findMeetLink(obj) {
+            const s = typeof obj === 'string' ? obj : JSON.stringify(obj || {});
+            const m = s.match(/https:\/\/meet\.google\.com\/[a-z0-9-]+/i);
+            return m ? m[0] : null;
+        }
+
+        // webhook returns "true"/"false" as strings, so accept both forms
+        const isMeetScheduled = b => {
+            if (!b) return false;
+            const v = b.meetScheduled ?? b.meet_scheduled;
+            return v === true || String(v).toLowerCase() === 'true';
+        };
+
+        async function onBook() {
+            if (!validate()) return;
+            const start = resolveStart();
+            const startEpoch = start.startEpoch;
+            const endEpoch = startEpoch + MEET_DURATION_MIN * 60000;
+            const startStr = toISTString(startEpoch);
+            const endStr = toISTString(endEpoch);
+            const guestEmail = $('guest-email').value.trim();
+            const attendees = currentEmails();
+
+            const payload = {
+                deal_id: dealId,
+                title: $('meet-title').value.trim(),
+                organizer_user_id: state.me.id,
+                guest_email: attendees[0],
+                attendees: attendees,
+                user_email: state.me.email,
+                start_time: startStr,
+                end_time: endStr,
+                timeZone: TIME_ZONE,
+                add_conference: true,
+                notify_guests: true,
+                idempotency_key: `${IDEMPOTENCY_PREFIX}-${state.me.email}-${startStr}`,
+                token: token
+            };
+
+            state.submitting = true;
+            const btn = $('book-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spin"></span> Booking…';
+            setMsg('');
+            $('msg').dataset.sticky = '';
+
+            try {
+                const r = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const raw = await r.text();
+                let body = null; try { body = JSON.parse(raw); } catch (e) { }
+
+                // anything other than meet_scheduled = true is a failure, even on HTTP 200
+                if (!isMeetScheduled(body)) {
+                    const err = new Error(body?.error || (r.ok
+                        ? 'No meet scheduled, Please contact product support.'
+                        : `Webhook responded ${r.status}`));
+                    err.fromWebhook = true;
+                    throw err;
+                }
+
+                const link = body?.meet_url || findMeetLink(body);
+                if (link) {
+                    setMsg('', 'ok', `Video call booked. <a href="${link}" target="_blank" rel="noopener">${link}</a>`);
+                } else {
+                    setMsg('Video call booked. The invite has been sent.', 'ok');
+                }
+                btn.textContent = 'Booked';
+                window.parent.postMessage({ type: 'video-call-booked', payload }, '*');
+                state.submitting = false;   // button stays disabled: same slot must not be booked twice
+                await showToast('Video call booked successfully', 'success');   // ← add
+                closeCRMForm();             // ← close the form right after a successful booking
+                return;
+            } catch (e) {
+                console.error(e);
+                $('msg').dataset.sticky = '1';
+                // webhook's own error text is shown as-is; network errors get a prefix
+                setMsg(e.fromWebhook ? e.message : 'Could not book the video call. ' + e.message, 'err');
+                showToast(errMsg, 'error');
+            }
+            state.submitting = false;
+            btn.textContent = 'Book video call';
+            validate();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // INIT
+        // ═══════════════════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', async () => {
+            buildTimeOptions();
+            $('now-label').textContent = nowLabel();
+            setInterval(() => { if (state.mode === 'now' || true) $('now-label').textContent = nowLabel(); }, 30000);
+
+
+            // when: cards
+            const bind = (el, fn) => { el.addEventListener('click', fn); el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fn(); } }); };
+            bind($('when-now'), () => setMode('now'));
+            bind($('when-later'), () => setMode('later'));
+
+            // date: typed with auto-slashes, or picked from the calendar icon
+            $('date-text').addEventListener('input', e => {
+                let v = e.target.value.replace(/[^\d]/g, '').slice(0, 8);
+                if (v.length > 4) v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+                else if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+                e.target.value = v;
+                validate();
+            });
+            initCalendar();
+
+            $('time-select').addEventListener('change', e => { e.target.classList.toggle('empty', !e.target.value); validate(); });
+            $('ampm').addEventListener('click', e => {
+                const b = e.target.closest('button[data-v]'); if (!b) return;
+                state.ampm = b.dataset.v;
+                $('ampm').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+                validate();
+            });
+
+            ['meet-title'].forEach(id => $(id).addEventListener('input', validate));
+
+            const gi = $('guest-email');
+            gi.addEventListener('input', () => { /[,;\s]/.test(gi.value) ? commitEmails() : validate(); });
+            gi.addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); commitEmails(); }
+                else if (e.key === 'Backspace' && !gi.value && emails.length) { emails.pop(); renderChips(); validate(); }
+            });
+            gi.addEventListener('blur', commitEmails);
+            $('chips').addEventListener('click', e => {
+                const b = e.target.closest('button[data-i]');
+                if (b) { emails.splice(+b.dataset.i, 1); renderChips(); validate(); }
+                gi.focus();
+            });
+
+
+
+
+            $('book-btn').addEventListener('click', onBook);
+
+            setMode('later');
+
+            if (!token || !dealId) {
+                $('title').textContent = 'Schedule a video meet';
+                $('msg').dataset.sticky = '1';
+                setMsg(!token ? 'Missing auth token in the URL (?token=…).' : 'Missing deal id in the URL (?id=…).', 'err');
+                return;
+            }
+
+            // current user + deal campaign name, in parallel
+            const [meRes, campRes] = await Promise.allSettled([loadMe(), loadCampaignName()]);
+            if (meRes.status === 'fulfilled') state.me = meRes.value;
+            else { $('msg').dataset.sticky = '1'; setMsg(meRes.reason.message, 'err'); }
+            if (campRes.status === 'fulfilled') state.campaignName = campRes.value;
+            else console.error('Campaign name load failed', campRes.reason);
+
+            setTitle();
+            validate();
+        });
+    </script>
+</body>
+
+</html>

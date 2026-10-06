@@ -1,0 +1,2154 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <script>
+        window.onerror = function (m, s, l, c, e) { window.parent.postMessage({ type: 'dashboard-error', error: { message: m, source: s, line: l, stack: e?.stack } }, '*'); return false; };
+        window.addEventListener('unhandledrejection', e => { window.parent.postMessage({ type: 'dashboard-error', error: { message: 'Unhandled Promise Rejection', reason: e.reason?.message || String(e.reason) } }, '*'); });
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact emails</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: transparent;
+            color: #1f2937;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        button, input { font-family: inherit; }
+
+        .wrap { padding: 16px; }
+
+        .mail {
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 4px 18px rgba(16, 24, 40, .08);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 32px);
+            min-height: 460px;
+        }
+
+        /* ── top bar ── */
+        .top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 14px 20px;
+            border-bottom: 1px solid #eef1f4;
+        }
+
+        .title { font-size: 17px; font-weight: 600; color: #111827; letter-spacing: -0.01em; }
+        .title .sub { display: block; font-size: 12px; font-weight: 400; color: #6b7280; margin-top: 2px; }
+
+        .tools { display: flex; align-items: center; gap: 8px; margin-left: auto; flex: 1; justify-content: flex-end; }
+
+        .search { position: relative; flex: 1; max-width: 340px; min-width: 140px; }
+
+        .search input {
+            width: 100%;
+            height: 36px;
+            padding: 0 12px 0 34px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background: #f9fafb;
+            font-size: 13px;
+            outline: none;
+            transition: border-color .15s, background .15s;
+        }
+
+        .search input:focus { border-color: #175259; background: #fff; }
+
+        .search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #9ca3af; }
+
+        .icon-btn {
+            width: 36px; height: 36px; flex-shrink: 0;
+            display: inline-flex; align-items: center; justify-content: center;
+            border: 1px solid #e5e7eb; border-radius: 8px;
+            background: #fff; color: #374151; cursor: pointer;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .icon-btn:hover { background: #f3f4f6; border-color: #175259; color: #175259; }
+        .icon-btn.spinning svg { animation: spin .8s linear infinite; }
+
+        /* ── More filters ── */
+        .filter-wrap { position: relative; flex-shrink: 0; }
+
+        .more-btn {
+            height: 36px; display: inline-flex; align-items: center; gap: 8px;
+            padding: 0 12px; border: 1px solid #e5e7eb; border-radius: 8px;
+            background: #fff; color: #374151; font-size: 13px; font-weight: 500;
+            cursor: pointer; white-space: nowrap;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .more-btn:hover, .more-btn.open { border-color: #175259; color: #175259; background: #f5fafa; }
+
+        .count-dot {
+            min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+            background: #175259; color: #fff; font-size: 11px; font-weight: 600;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+
+        .count-dot[hidden] { display: none; }
+
+        .pop {
+            position: absolute; right: 0; top: calc(100% + 8px);
+            width: 320px; max-width: calc(100vw - 48px);
+            background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(16, 24, 40, .16);
+            padding: 16px; z-index: 40;
+        }
+
+        .pop[hidden] { display: none; }
+        .pop-sec + .pop-sec { margin-top: 16px; padding-top: 16px; border-top: 1px solid #f0f1f3; }
+        .pop-h { font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 10px; }
+
+        .sel-row {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            width: 100%; padding: 9px 12px;
+            border: 1px solid #e5e7eb; border-radius: 8px; background: #fff;
+            color: #374151; font-size: 13.5px; text-align: left; cursor: pointer;
+            transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .sel-row:hover { background: #f9fafb; }
+        .sel-row .tick { display: none; flex-shrink: 0; color: #1d6fb8; }
+        .sel-row.on { background: #e8f3fd; border-color: #bcdcf7; color: #14558f; font-weight: 500; }
+        .sel-row.on:hover { background: #dff0fc; }
+        .sel-row.on .tick { display: block; }
+
+        .pills { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .pill-l { display: block; font-size: 11.5px; color: #9ca3af; margin-bottom: 4px; }
+        .date-box { position: relative; }
+
+        .pill {
+            width: 100%; height: 36px; padding: 0 36px 0 14px;
+            border: 1px solid #e5e7eb; border-radius: 999px;
+            font-family: inherit; font-size: 13px; color: #111827; background: #fff; outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .pill::placeholder { color: #9ca3af; }
+        .pill:focus { border-color: #374151; box-shadow: 0 0 0 3px rgba(55, 65, 81, .10); }
+
+        .cal-btn {
+            position: absolute; right: 5px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; color: #374151;
+            padding: 5px; line-height: 0; border-radius: 50%;
+        }
+
+        .cal-btn:hover { background: #eef4f5; color: #175259; }
+
+        /* custom calendar (same look as the meet scheduler) */
+        .cal-title { font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px; }
+        .cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .cal-month { font-size: 15px; font-weight: 600; color: #111827; }
+
+        .cal-nav {
+            width: 32px; height: 32px; border: none; background: none; border-radius: 8px;
+            cursor: pointer; color: #374151; display: inline-flex; align-items: center; justify-content: center;
+        }
+
+        .cal-nav:hover { background: #f3f4f6; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+        .cal-dow { font-size: 12px; font-weight: 500; color: #9ca3af; text-align: center; padding: 6px 0; }
+
+        .cal-day {
+            height: 34px; border: 1px solid transparent; background: none; border-radius: 8px;
+            font-size: 14px; color: #111827; cursor: pointer; font-variant-numeric: tabular-nums;
+        }
+
+        .cal-day:hover:not(.sel) { background: #eef4f5; }
+        .cal-day.today { border-color: #175259; color: #175259; font-weight: 600; }
+        .cal-day.sel { background: #175259; border-color: #175259; color: #fff; font-weight: 600; }
+
+        .cal-foot { margin-top: 10px; padding-top: 10px; border-top: 1px solid #f0f1f3; display: flex; justify-content: space-between; align-items: center; }
+        .cal-link { background: none; border: none; cursor: pointer; font-size: 13px; font-weight: 600; color: #175259; padding: 4px 8px; border-radius: 6px; }
+        .cal-link:hover { background: #eef4f5; }
+        .cal-link.muted { color: #6b7280; font-weight: 500; }
+        .pop-hint { font-size: 11.5px; color: #9ca3af; margin-top: 8px; line-height: 1.45; }
+        .pop-foot { display: flex; justify-content: flex-end; margin-top: 14px; }
+
+        .flink { border: none; background: none; color: #175259; font-weight: 600; font-size: 12.5px; cursor: pointer; padding: 4px 6px; border-radius: 6px; }
+        .flink:hover { background: #eef4f5; }
+
+        /* active filter chips */
+        .activebar {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+            padding: 8px 20px; border-bottom: 1px solid #eef1f4; background: #fafbfb;
+        }
+
+        .activebar[hidden] { display: none; }
+
+        .fchip {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #e8f1f2; color: #0f3d42; border-radius: 999px;
+            padding: 3px 6px 3px 12px; font-size: 12.5px;
+        }
+
+        .fchip button { border: none; background: none; cursor: pointer; color: #175259; font-size: 16px; line-height: 1; padding: 0 4px; border-radius: 50%; }
+        .fchip button:hover { background: #d6e7e9; }
+
+        /* ── tabs ── */
+        .tabs { display: flex; gap: 4px; padding: 0 14px; border-bottom: 1px solid #eef1f4; }
+
+        .tab {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 12px 14px; border: none; background: none;
+            font-size: 13.5px; font-weight: 500; color: #6b7280; cursor: pointer;
+            border-bottom: 2px solid transparent; margin-bottom: -1px;
+        }
+
+        .tab:hover { color: #111827; }
+        .tab.active { color: #175259; border-bottom-color: #175259; font-weight: 600; }
+
+        .badge {
+            min-width: 22px; padding: 1px 7px; border-radius: 999px;
+            background: #f3f4f6; color: #6b7280;
+            font-size: 11.5px; font-weight: 600; text-align: center;
+        }
+
+        .tab.active .badge { background: #e8f1f2; color: #175259; }
+
+        /* ── body: list + reading pane ── */
+        .body { flex: 1; display: grid; grid-template-columns: minmax(300px, 38%) 1fr; min-height: 0; }
+
+        .list { overflow-y: auto; border-right: 1px solid #eef1f4; }
+
+        .row {
+            display: flex; gap: 12px; padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6; cursor: pointer; transition: background .12s;
+        }
+
+        .row:hover { background: #f9fafb; }
+        .row.sel { background: #eef6f7; box-shadow: inset 3px 0 0 #175259; }
+
+        .avatar {
+            width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%;
+            background: #175259; color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 600; font-size: 14px; text-transform: uppercase;
+        }
+
+        .row-main { flex: 1; min-width: 0; }
+        .row-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+        .row-who { font-weight: 600; color: #111827; font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .row-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; color: #9ca3af; }
+        .row-date { font-size: 11.5px; color: #9ca3af; white-space: nowrap; }
+        .row-subj { font-size: 13px; color: #374151; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .row-snip { font-size: 12px; color: #6b7280; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        mark { background: #fef08a; color: inherit; border-radius: 2px; padding: 0 1px; }
+
+        .more { padding: 14px; text-align: center; }
+        .more-note { font-size: 12px; color: #9ca3af; margin-bottom: 8px; }
+
+        .btn {
+            height: 34px; padding: 0 18px;
+            border: 1px solid #d1d5db; border-radius: 8px;
+            background: #fff; color: #374151;
+            font-size: 13px; font-weight: 500; cursor: pointer;
+        }
+
+        .btn:hover:not(:disabled) { background: #f3f4f6; }
+        .btn:disabled { color: #9ca3af; cursor: not-allowed; }
+
+        /* ── reading pane ── */
+        .read { overflow-y: auto; padding: 24px 28px; }
+
+        .read-subj {
+            font-size: 20px; font-weight: 600; color: #111827;
+            line-height: 1.3; letter-spacing: -0.01em; margin-bottom: 18px; word-break: break-word;
+        }
+
+        .meta {
+            display: grid; grid-template-columns: 70px 1fr; gap: 10px 12px;
+            font-size: 13px; padding: 14px 16px;
+            background: #f9fafb; border: 1px solid #eef1f4; border-radius: 10px;
+        }
+
+        .meta .k { color: #9ca3af; font-weight: 500; }
+        .meta .v { color: #111827; display: flex; flex-wrap: wrap; gap: 6px; word-break: break-all; }
+
+        .chip { background: #e8f1f2; color: #0f3d42; border-radius: 999px; padding: 2px 10px; font-size: 12.5px; }
+        .chip.none { background: none; color: #9ca3af; padding: 0; }
+
+        .dir-tag { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+        .dir-tag.sent { background: #dbeafe; color: #1d4ed8; }
+        .dir-tag.received { background: #dcfce7; color: #166534; }
+
+        /* attachments */
+        .atts-label { margin: 18px 0 8px; font-size: 12px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: .4px; }
+        .atts { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        .att {
+            display: inline-flex; align-items: center; gap: 8px;
+            max-width: 100%; padding: 8px 12px;
+            border: 1px solid #e5e7eb; border-radius: 8px; background: #fff;
+            color: #111827; text-decoration: none; font-size: 13px;
+            transition: border-color .15s, background .15s;
+        }
+
+        .att:hover { border-color: #175259; background: #f5fafa; }
+        .att svg { flex-shrink: 0; color: #175259; }
+        .att .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px; }
+        .att .ext { flex-shrink: 0; font-size: 10.5px; font-weight: 700; color: #6b7280; background: #f3f4f6; border-radius: 4px; padding: 1px 6px; }
+
+        /* message body */
+        .notice {
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+            margin-top: 18px; padding: 8px 12px;
+            background: #fffbeb; border: 1px solid #fcd34d; border-radius: 8px;
+            color: #92400e; font-size: 12.5px;
+        }
+
+        .notice button { border: none; background: none; color: #175259; font-weight: 600; cursor: pointer; font-size: 12.5px; }
+
+        .body-frame { display: block; width: 100%; height: 80px; border: 0; margin-top: 18px; background: #fff; }
+        .body-sep { height: 1px; background: #eef1f4; margin-top: 18px; }
+
+        /* states */
+        .empty { padding: 48px 20px; text-align: center; color: #9ca3af; font-size: 13px; }
+        .empty.err { color: #b91c1c; }
+        .read > .empty { padding-top: 110px; }
+
+        .loader {
+            border: 3px solid #f3f3f3; border-top: 3px solid #175259; border-radius: 50%;
+            width: 28px; height: 28px; animation: spin .8s linear infinite; margin: 40px auto;
+        }
+
+        .loader.small { width: 22px; height: 22px; margin: 28px auto; }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 760px) {
+            .body { grid-template-columns: 1fr; }
+            .list { border-right: none; max-height: 40vh; border-bottom: 1px solid #eef1f4; }
+            .top { flex-wrap: wrap; }
+            .tools { width: 100%; }
+            .search { max-width: none; }
+            .read { padding: 18px; }
+            .activebar { padding: 8px 14px; }
+        }
+    
+        /* ── conversation list ── */
+        .day-head {
+            position: sticky; top: 0; z-index: 2;
+            padding: 8px 16px; background: #f9fafa; border-bottom: 1px solid #eef1f4;
+            font-size: 12px; font-weight: 600; color: #6b7280;
+        }
+
+        .row-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+
+        .reply-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-size: 11px; font-weight: 600; color: #175259;
+            background: #e8f1f2; border-radius: 999px; padding: 1px 9px;
+        }
+
+        .row-tags .dir-tag { padding: 1px 9px; font-size: 11px; }
+
+        /* ── thread (Gmail-style) ── */
+        .read-sub { margin: -10px 0 14px; font-size: 12.5px; color: #6b7280; }
+        .thread { border: 1px solid #eef1f4; border-radius: 10px; overflow: hidden; background: #fff; }
+
+        .gm-item { display: flex; gap: 12px; padding: 12px 16px; border-bottom: 1px solid #eef1f4; }
+        .gm-item:last-child { border-bottom: none; }
+        .gm-item.collapsed { cursor: pointer; align-items: center; transition: background .12s; }
+        .gm-item.collapsed:hover { background: #f9fafb; }
+
+        .gm-avatar {
+            width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 13px; text-transform: uppercase;
+        }
+
+        .gm-main { flex: 1; min-width: 0; }
+        .gm-name { font-weight: 600; color: #111827; font-size: 13.5px; word-break: break-all; }
+        .gm-snip { font-size: 12.5px; color: #6b7280; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+        .gm-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; color: #9ca3af; font-size: 12px; white-space: nowrap; }
+        .gm-content { flex: 1; min-width: 0; }
+        .gm-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+        .gm-from { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; min-width: 0; }
+        .gm-addr { font-size: 12px; color: #6b7280; word-break: break-all; }
+
+        .gm-collapse { border: none; background: none; cursor: pointer; color: #9ca3af; padding: 3px; border-radius: 6px; line-height: 0; }
+        .gm-collapse:hover { background: #f3f4f6; color: #374151; }
+
+        .gm-rcpt { display: flex; flex-wrap: wrap; gap: 2px 16px; margin-top: 4px; font-size: 12.5px; color: #4b5563; word-break: break-all; }
+        .gm-rcpt b { font-weight: 500; color: #9ca3af; margin-right: 4px; }
+        .gm-content .atts { margin-top: 10px; }
+        .gm-body { margin-top: 10px; }
+        .gm-body .body-frame { margin-top: 0; }
+
+        .gm-expander {
+            display: flex; align-items: center; gap: 10px; padding: 8px 16px;
+            border-bottom: 1px solid #eef1f4; background: #fafbfb; cursor: pointer;
+            color: #6b7280; font-size: 12.5px; transition: background .12s;
+        }
+
+        .gm-expander:hover { background: #f3f4f6; }
+
+        .gm-count {
+            min-width: 30px; height: 30px; padding: 0 6px; border-radius: 50%;
+            border: 1px solid #d1d5db; background: #fff;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 600; color: #374151;
+        }
+
+
+        /* ── deal link / convert-to-deal ── */
+        .deal-chip {
+            display: inline-flex; align-items: center; gap: 5px; max-width: 100%;
+            padding: 1px 9px; border-radius: 999px; text-decoration: none;
+            font-size: 11.5px; font-weight: 600; line-height: 1.6; white-space: nowrap;
+            transition: filter .12s;
+        }
+
+        .deal-chip:hover { filter: brightness(.95); text-decoration: underline; }
+        .deal-chip span { overflow: hidden; text-overflow: ellipsis; }
+        .deal-chip svg { flex-shrink: 0; }
+        .row-deal, .gm-deal { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
+        .gm-deal { margin-top: 8px; }
+
+        .convert-btn {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 1px 11px; border-radius: 999px; cursor: pointer;
+            border: 1px solid #175259; background: #fff; color: #175259;
+            font-size: 11.5px; font-weight: 600; line-height: 1.6; white-space: nowrap;
+            transition: background .15s, color .15s, border-color .15s;
+        }
+
+        .convert-btn:hover:not(:disabled) { background: #e8f1f2; }
+        .convert-btn:disabled { cursor: default; }
+        .convert-btn.sending { border-color: #d1d5db; color: #6b7280; }
+        .convert-btn.sent { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+        .convert-btn.error { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+
+        .mini-spin {
+            width: 10px; height: 10px; border: 2px solid #d1d5db; border-top-color: #175259;
+            border-radius: 50%; animation: spin .8s linear infinite;
+        }
+
+        /* ── reply all ── */
+        .gm-iconbtn { border: none; background: none; cursor: pointer; color: #9ca3af; padding: 3px; border-radius: 6px; line-height: 0; }
+        .gm-iconbtn:hover { background: #f3f4f6; color: #175259; }
+        .gm-actions { margin-top: 12px; }
+
+        .reply-btn {
+            display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px;
+            border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #374151;
+            font-size: 13px; font-weight: 500; cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+        }
+
+        .reply-btn:hover { background: #f5fafa; border-color: #175259; color: #175259; }
+
+        .gm-compose { padding: 12px 16px 14px; border-bottom: 1px solid #eef1f4; background: #fafbfb; }
+        .cp-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+        .cp-title { font-size: 12px; font-weight: 700; color: #175259; text-transform: uppercase; letter-spacing: .4px; }
+        .cp-close { border: none; background: none; cursor: pointer; font-size: 20px; line-height: 1; color: #9ca3af; padding: 0 6px; border-radius: 6px; }
+        .cp-close:hover { background: #f3f4f6; color: #374151; }
+
+        .cp-row { display: flex; align-items: flex-start; gap: 10px; padding: 5px 0; border-bottom: 1px solid #eef1f4; }
+        .cp-l { width: 52px; flex-shrink: 0; color: #9ca3af; font-size: 12.5px; padding-top: 6px; }
+        .cp-from { font-size: 13px; color: #374151; padding-top: 5px; word-break: break-all; }
+        .cp-chips { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-width: 0; }
+        .cp-chips.invalid .cp-input { color: #b91c1c; }
+
+        .cp-chip {
+            display: inline-flex; align-items: center; gap: 4px; background: #e8f1f2; color: #0f3d42;
+            border-radius: 999px; padding: 2px 4px 2px 10px; font-size: 12.5px; word-break: break-all;
+        }
+
+        .cp-x { border: none; background: none; cursor: pointer; color: #175259; font-size: 15px; line-height: 1; padding: 0 4px; border-radius: 50%; }
+        .cp-x:hover { background: #d6e7e9; }
+        .cp-input { flex: 1; min-width: 150px; height: 28px; border: none; outline: none; background: transparent; font-size: 13px; }
+        .cp-subject { flex: 1; height: 30px; border: none; outline: none; background: transparent; font-size: 13.5px; font-weight: 500; color: #111827; }
+        .cp-link { border: none; background: none; cursor: pointer; color: #175259; font-size: 12.5px; font-weight: 600; padding: 5px 4px; border-radius: 6px; }
+        .cp-link:hover { background: #eef4f5; }
+
+        .cp-editor {
+            min-height: 120px; max-height: 340px; overflow-y: auto; padding: 10px 2px; outline: none;
+            font-size: 14px; line-height: 1.55; color: #1f2937; word-break: break-word;
+        }
+
+        .cp-editor:empty:before { content: attr(data-placeholder); color: #9ca3af; }
+        .cp-editor img { max-width: 100%; height: auto; border-radius: 4px; }
+        .cp-quote { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6b7280; margin: 2px 0 8px; cursor: pointer; }
+        .cp-quote input { accent-color: #175259; }
+        .cp-files { display: flex; flex-wrap: wrap; gap: 6px; }
+        .cp-files:not(:empty) { margin-bottom: 8px; }
+
+        .cp-file {
+            display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+            padding: 4px 4px 4px 10px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; font-size: 12.5px; color: #111827;
+        }
+
+        .cp-file svg { color: #175259; flex-shrink: 0; }
+        .cp-file.error { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+        .cp-fn { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 240px; }
+        .cp-fs { color: #9ca3af; font-size: 11.5px; }
+        .cp-file-x { border: none; background: none; cursor: pointer; color: #6b7280; font-size: 15px; line-height: 1; padding: 0 5px; border-radius: 50%; }
+        .cp-file-x:hover { background: #f3f4f6; }
+
+        .cp-spin {
+            width: 11px; height: 11px; flex-shrink: 0; border: 2px solid #d1d5db; border-top-color: #175259;
+            border-radius: 50%; animation: spin .8s linear infinite;
+        }
+
+        .cp-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .cp-tools { display: flex; align-items: center; gap: 2px; }
+
+        .cp-fmt, .cp-tool {
+            min-width: 30px; height: 30px; border: none; background: none; border-radius: 6px; cursor: pointer;
+            color: #4b5563; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; padding: 0 6px;
+        }
+
+        .cp-fmt:hover, .cp-tool:hover { background: #eef1f4; color: #175259; }
+        .cp-sep { width: 1px; height: 18px; background: #e5e7eb; margin: 0 6px; }
+        .cp-err { flex: 1; min-width: 120px; font-size: 12.5px; color: #b91c1c; }
+        .cp-actions { display: flex; align-items: center; gap: 8px; }
+
+        .cp-send {
+            height: 34px; padding: 0 22px; border: none; border-radius: 8px; background: #175259; color: #fff;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+        }
+
+        .cp-send:hover:not(:disabled) { background: #0f3d42; }
+        .cp-send:disabled { background: #9ca3a5; cursor: not-allowed; }
+
+        .toast {
+            position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 16px); opacity: 0; pointer-events: none;
+            padding: 10px 18px; border-radius: 10px; background: #111827; color: #fff; font-size: 13px; z-index: 100;
+            transition: opacity .2s, transform .2s;
+        }
+
+        .toast.show { opacity: 1; transform: translate(-50%, 0); }
+        .toast.err { background: #b91c1c; }
+
+        .cp-fromin { flex: 1; min-width: 0; height: 30px; border: none; outline: none; background: transparent; font-size: 13px; color: #374151; }
+        .cp-hint { font-size: 11.5px; color: #9ca3af; margin: 2px 0 4px 62px; line-height: 1.4; }
+        .cp-topright { display: flex; align-items: center; gap: 6px; }
+
+        .cp-editor ul, .cp-editor ol { margin: 4px 0 4px 4px; padding-left: 22px; }
+        .cp-editor ul { list-style: disc; }
+        .cp-editor ol { list-style: decimal; }
+        .cp-editor li { margin: 2px 0; }
+        .cp-fromin[readonly] { color: #6b7280; cursor: default; }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="mail">
+            <div class="top">
+                <div class="title">Contact emails<span class="sub" id="sub">Loading…</span></div>
+                <div class="tools">
+                    <div class="search">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="7" />
+                            <path d="M21 21l-4.3-4.3" />
+                        </svg>
+                        <input id="search" type="text" placeholder="Search mails, content, attachments" autocomplete="off">
+                    </div>
+
+                    <div class="filter-wrap">
+                        <button class="more-btn" id="more-filters-btn" type="button" aria-haspopup="true" aria-expanded="false">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 6h16M7 12h10M10 18h4" />
+                            </svg>
+                            More filters
+                            <span class="count-dot" id="filter-count" hidden>0</span>
+                        </button>
+                        <div class="pop" id="filter-pop" hidden>
+                            <div id="pop-main">
+                                <div class="pop-sec">
+                                    <div class="pop-h">Attachment</div>
+                                    <button class="sel-row" id="att-toggle" type="button" aria-pressed="false">
+                                        <span>Has attachment</span>
+                                        <svg class="tick" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <path d="M5 12.5l4.5 4.5L19 7.5" />
+                                        </svg>
+                                    </button>
+                                </div>
+                                <div class="pop-sec">
+                                    <div class="pop-h">Date</div>
+                                    <div class="pills">
+                                        <div>
+                                            <label class="pill-l" for="f-from">Start date</label>
+                                            <div class="date-box">
+                                                <input class="pill" id="f-from" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off">
+                                                <button class="cal-btn" type="button" data-cal="from" aria-label="Pick start date">
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                                        <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+                                                        <path d="M3.5 10h17M8 3v4M16 3v4M12 13.5v4" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="pill-l" for="f-to">End date</label>
+                                            <div class="date-box">
+                                                <input class="pill" id="f-to" type="text" inputmode="numeric" placeholder="DD/MM/YYYY" maxlength="10" autocomplete="off">
+                                                <button class="cal-btn" type="button" data-cal="to" aria-label="Pick end date">
+                                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                                        <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+                                                        <path d="M3.5 10h17M8 3v4M16 3v4M12 13.5v4" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="pop-hint">Filters on the mail date (when it was received or sent). Enter only one date to see mails from that day.</div>
+                                </div>
+                                <div class="pop-foot"><button class="flink" id="f-clear" type="button">Clear all</button></div>
+                            </div>
+                            <div id="cal-view" hidden></div>
+                        </div>
+                    </div>
+
+                    <button class="icon-btn" id="refresh-btn" type="button" title="Refresh" aria-label="Refresh">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12a9 9 0 1 1-3-6.7L21 8" />
+                            <path d="M21 3v5h-5" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="activebar" id="activebar" hidden></div>
+
+            <div class="body">
+                <div class="list" id="list">
+                    <div class="loader"></div>
+                </div>
+                <div class="read" id="read">
+                    <div class="empty">Select a conversation to read it</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════
+        // CONFIG
+        // ═══════════════════════════════════════════════════════════════
+        const BASE_URL = 'https://app.superleap.com';
+        const API_URL = BASE_URL + '/api/v1/reports/execute';
+        const ME_URL = BASE_URL + '/api/v1/org/user/me';
+
+        const CLIENT_ID = 'superleapweb';
+        const CLIENT_SECRET = 'UEAlm1PWab8VXB5b';   // same as the other dashboards — confirm prod value
+
+        const EMAIL_OBJECT_SLUG = 'email';
+        const F = {
+            thread: 'thread_id',        // mails of one conversation share this
+            direction: 'direction',     // 'sent' | 'received'
+            from: 'from_email',
+            to: 'recipient_email',
+            cc: 'cc',
+            bcc: 'bcc',
+            received: 'received_at',    // main mail time (falls back to sent_at when empty)
+            sent: 'sent_at',
+            subject: 'subject',
+            content: 'content',         // plain text: fetched in the list so it can be searched
+            html: 'html_content',       // heavy: fetched only when a conversation is opened
+            attachments: 'attachments', // list of file URLs
+            deals: 'email_deals',       // the deal(s) a mail is linked to (blank = no deal yet)
+        };
+
+        // Scope: every mail that has the contact's address in From / To / Cc / Bcc (no deal lookup)
+        const CONTACT_SLUG_CANDIDATES = ['contacts'];   // ⚠ first object slug that answers is used
+        const CONTACT_EMAIL_FIELDS = ['email', 'alternate_email']; // addresses of the contact to look for in the mails
+        const SCOPE_TO_CURRENT_USER = false;      // true = also require the logged-in user to be in the mail
+        const SCOPE_LABEL = 'contact';
+
+        // Deal shown on each mail (name from the deals object, linking to the deal record) or a "Convert to deal" button when blank
+        const DEAL_OBJECT_SLUG = 'deals';
+        const DEAL_LABEL_FIELDS = ['name', 'campaign_name'];   // first non-empty one is the deal name (then the id as a last resort)
+        const DEAL_URL = id => `https://app.superleap.com/deals/records/${encodeURIComponent(id)}`;
+        const CONVERT_WEBHOOK = 'https://v1hooks.superleap.com/5aZNph/5aZNph_Sj3En4ggtaKcyoVsaeGj/sync';
+
+        const PAGE_SIZE = 50;           // mails per page (they are grouped into conversations)
+        const IST_MS = 5.5 * 60 * 60 * 1000;
+
+        // ── Reply all ──
+        const SEND_URL = BASE_URL + '/api/v1/org/communication/records/email';
+        const UPLOAD_URL = BASE_URL + '/api/v1/org/file/upload';
+        const PLATFORM_ID = '';                  // ⚠ sent as the `platform-id` header when your org needs one (the Pagarbook curl had one)
+        const REPLY_FROM = '';                   // '' = always send from the logged-in user's email; set an address to force another one
+        const ATTACHMENT_PAYLOAD = f => ({ name: f.name, type: f.type, url: f.url });   // attachments[] entry, same shape as the working Superleap request
+
+        // To / Cc / Bcc entries: the API rejected plain strings in `cc` ("cannot unmarshal string into … email_client.SendTo"),
+        // so every address is sent as an object. ⚠ Shapes are tried in order, the first one the API accepts is remembered.
+        const RECIPIENT_SHAPES = [a => ({ to: a }), a => ({ email: a })];
+
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token') || params.get('authToken');
+const scopeId = params.get('id') || params.get('contactId') || params.get('contact_id');
+
+        // ═══════════════════════════════════════════════════════════════
+        // STATE
+        // ═══════════════════════════════════════════════════════════════
+        const state = {
+            me: null,
+            scopeReady: false,
+            filters: { search: '', attach: false, from: '', to: '' },   // from/to = 'YYYY-MM-DD'
+            groups: [],               // conversations, newest first
+            groupMap: new Map(),      // key -> conversation
+            threadCounts: {},         // thread_id -> number of mails in that thread
+            offset: 0, done: false, loading: false, loaded: false, error: '', gen: 0,
+            selected: null,           // conversation key
+            threads: {},              // key -> { status: 'loading' | 'ok' | 'error', mails, error }
+            expanded: new Set(),      // ids of the mails shown open in the thread
+            showMiddle: false,        // long threads hide the middle mails until clicked
+            showImages: false,        // remote images in mail bodies stay blocked until the user allows them
+            dealNames: {},            // deal id -> deal name
+            dealPending: new Set(),   // deal ids being looked up
+            dealVer: 0,               // bumps when deal names/links change so the reading pane redraws
+            convert: {},              // 'Convert to deal' request per button (conversation row key / mail id): { status: 'sending' | 'sent' | 'error', error }
+        };
+
+        const $ = id => document.getElementById(id);
+
+        // ═══════════════════════════════════════════════════════════════
+        // API HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+        async function safe(fn, retries = 3) {
+            let lastErr;
+            for (let i = 0; i < retries; i++) {
+                try { return await fn(); }
+                catch (e) { lastErr = e; if (i < retries - 1) await sleep(600 * (i + 1)); }
+            }
+            throw lastErr;
+        }
+        async function query(q, slug, retries = 3) {
+            return safe(async () => {
+                const r = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ query: q, slug })
+                });
+                if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
+                const j = await r.json();
+                if (!j.success) throw new Error(j.data?.message || 'API error');
+                return j.data.records || [];
+            }, retries);
+        }
+        const sqlStr = v => `'${String(v).replace(/'/g, "''")}'`;
+
+        async function loadMe() {
+            const r = await fetch(ME_URL, {
+                headers: { 'Authorization': `Bearer ${token}`, 'client-id': CLIENT_ID, 'client-secret': CLIENT_SECRET }
+            });
+            if (!r.ok) throw new Error(`Could not load current user (HTTP ${r.status})`);
+            const d = (await r.json())?.data || {};
+            if (!d.user_id || !d.email) throw new Error('Could not identify the current user');
+            return { id: d.user_id, email: String(d.email).trim().toLowerCase(), name: d.name || '' };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // EMAIL ADDRESS HELPERS
+        // cc/bcc/recipient may be an array, "a@x.com, b@x.com", "Name <a@x.com>", "{}" or "{a@x.com,b@x.com}"
+        // ═══════════════════════════════════════════════════════════════
+        const extractEmails = v => {
+            const raw = Array.isArray(v) ? v.join(',') : String(v ?? '');
+            return raw.match(/[^\s<>,;"'{}]+@[^\s<>,;"'{}]+/g) || [];
+        };
+        const asList = v => extractEmails(v).map(s => s.toLowerCase());
+
+        // email_deals may come back as an id, a list of ids, "{id1,id2}", an object, or blank ("", "{}", "[]"): reduce it to plain ids
+        const idList = v => {
+            if (v == null || v === '') return [];
+            if (Array.isArray(v)) return v.flatMap(idList);
+            if (typeof v === 'object') return idList(v.id ?? v.value ?? '');
+            const t = String(v).trim();
+            if (/^[\[{]/.test(t)) {
+                try { return idList(JSON.parse(t)); } catch (e) { }
+                return t.replace(/^[\[{]|[\]}]$/g, '').split(',').map(x => x.trim().replace(/^"|"$/g, '')).filter(Boolean);
+            }
+            return t ? [t] : [];
+        };
+
+        // from_email / recipient_email / cc / bcc contain this address (works on text and list fields)
+        const emailMatch = (col, email) => `${col}::text ILIKE ${sqlStr('%' + email.replace(/[%_]/g, '') + '%')}`;
+        function addrMatch(addrs) {
+            const conds = [];
+            addrs.forEach(a => [F.from, F.to, F.cc, F.bcc].forEach(col => conds.push(emailMatch(col, a))));
+            return `(${conds.join(' OR ')})`;
+        }
+        // exact-address check on a loaded mail (guards against substring look-alikes such as aa@x.com vs a@x.com)
+        function mentions(r, addrs) {
+            const set = new Set([...asList(r.from_email), ...asList(r.recipient_email), ...asList(r.cc), ...asList(r.bcc)]);
+            return addrs.some(a => set.has(a));
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SCOPE  (which mails belong on this page)
+        // ═══════════════════════════════════════════════════════════════
+        let contactAddrs = [];
+        let contactSlug = CONTACT_SLUG_CANDIDATES[0];     // the object slug that answered (used as the record context when replying)
+
+        // read the contact's own email addresses (email + alternate_email)
+        async function prepareScope() {
+            const cols = CONTACT_EMAIL_FIELDS.map((f, i) => `${f} as addr_${i}`).join(', ');
+            let row = null, lastErr = null;
+            for (const slug of CONTACT_SLUG_CANDIDATES) {
+                try {
+                    const rows = await query(`SELECT id, ${cols} FROM ${slug} WHERE id = ${sqlStr(scopeId)} LIMIT 1 OFFSET 0`, slug, 1);
+                    if (!rows.length) throw new Error('Contact not found');
+                    row = rows[0];
+                    contactSlug = slug;
+                    break;
+                } catch (e) {
+                    lastErr = e;
+                    if (e.message === 'Contact not found') break;      // the slug is right, the record is not
+                }
+            }
+            if (!row) throw new Error(lastErr ? lastErr.message : 'Contact not found');
+            contactAddrs = [...new Set(CONTACT_EMAIL_FIELDS.flatMap((f, i) => asList(row['addr_' + i])))];
+            if (!contactAddrs.length) throw new Error('This contact has no email address.');
+        }
+        function scopeWhere() {
+            const parts = [addrMatch(contactAddrs)];
+            if (SCOPE_TO_CURRENT_USER) parts.push(addrMatch([state.me.email]));
+            return parts.join(' AND ');
+        }
+        const inScope = r => mentions(r, contactAddrs) && (!SCOPE_TO_CURRENT_USER || mentions(r, [state.me.email]));
+        const scopeSub = () => `Showing mails with ${contactAddrs.join(', ')}`;
+
+        // ═══════════════════════════════════════════════════════════════
+        // DATE FILTER  (IST day boundaries; one date = that single day)
+        // ═══════════════════════════════════════════════════════════════
+        function dateBounds() {
+            let a = state.filters.from, b = state.filters.to;
+            if (!a && !b) return null;
+            if (!a) a = b;
+            if (!b) b = a;
+            if (a > b) [a, b] = [b, a];                       // 'YYYY-MM-DD' strings sort chronologically
+            const dayStart = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d) - IST_MS; };
+            // [start of the first day, start of the day after the last day)
+            return { a, b, start: dayStart(a), end: dayStart(b) + 24 * 60 * 60 * 1000 };
+        }
+
+        function whereClause() {
+            const parts = [scopeWhere()];
+            const db = dateBounds();
+            if (db) {
+                const R = F.received, S = F.sent;
+                parts.push(`((${R} >= ${db.start} AND ${R} < ${db.end}) OR (${R} IS NULL AND ${S} >= ${db.start} AND ${S} < ${db.end}))`);
+            }
+            return parts.join(' AND ');
+        }
+
+        // list query: light columns + content (search) + attachments (search / filter); newest mail first
+        async function fetchPage() {
+            const q = `SELECT id, ${F.thread} as thread_id, ${F.direction} as direction, ${F.from} as from_email, ${F.to} as recipient_email, ` +
+                `${F.cc} as cc, ${F.bcc} as bcc, ${F.received} as received_at, ${F.sent} as sent_at, ${F.subject} as subject, ` +
+                `${F.content} as content, ${F.attachments} as attachments, ${F.deals} as email_deals ` +
+                `FROM ${EMAIL_OBJECT_SLUG} WHERE ${whereClause()} ` +
+                `ORDER BY coalesce(${F.received}, ${F.sent}) DESC NULLS LAST, id DESC LIMIT ${PAGE_SIZE} OFFSET ${state.offset}`;
+            return query(q, EMAIL_OBJECT_SLUG);
+        }
+
+        // every mail of one conversation (any direction, any sender), oldest first, with the heavy html column
+        async function fetchThread(g) {
+            const where = g.threadId ? `${F.thread} = ${sqlStr(g.threadId)}` : `id = ${sqlStr(g.latest.id)}`;
+            const q = `SELECT id, ${F.thread} as thread_id, ${F.subject} as subject, ${F.from} as from_email, ${F.to} as recipient_email, ` +
+                `${F.cc} as cc, ${F.bcc} as bcc, ${F.received} as received_at, ${F.sent} as sent_at, ` +
+                `${F.html} as html_content, ${F.content} as content, ${F.direction} as direction, ${F.attachments} as attachments, ${F.deals} as email_deals ` +
+                `FROM ${EMAIL_OBJECT_SLUG} WHERE ${where} ORDER BY coalesce(${F.received}, ${F.sent}) ASC LIMIT 200 OFFSET 0`;
+            const rows = await query(q, EMAIL_OBJECT_SLUG);
+            rows.forEach(m => { m._dealIds = idList(m.email_deals); });
+            return rows.sort((a, b) => mailMs(a) - mailMs(b));
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // SEARCH INDEX  (built once per mail when it is loaded)
+        // ═══════════════════════════════════════════════════════════════
+        // lowercase, and treat _ - . as spaces so "Media Ant" finds Media_Ant and "superleap.com" finds superleap com
+        const norm = s => String(s ?? '').toLowerCase().replace(/[_\-.]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+        const looksHtml = s => /<(html|body|div|p|br|span|table|tr|td|a|ul|ol|li|img|h[1-6]|b|i|u|strong|em|font|style|blockquote|section|center)\b[^>]*>/i.test(s);
+
+        // content may be plain text or HTML: reduce it to readable text
+        function contentText(c) {
+            let s = String(c ?? '');
+            if (!s.trim()) return '';
+            if (looksHtml(s)) {
+                s = s.replace(/<(style|script|head)[\s\S]*?<\/\1>/gi, ' ')
+                    .replace(/<br\s*\/?>|<\/(p|div|li|tr|h[1-6])>/gi, ' ')
+                    .replace(/<[^>]+>/g, ' ')
+                    .replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+                    .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+            }
+            return s.replace(/\s+/g, ' ').trim();
+        }
+
+        // attachments can be an array of URLs, a JSON string, or null
+        function normAtt(a) {
+            if (!a) return [];
+            if (Array.isArray(a)) return a.filter(Boolean).map(String);
+            if (typeof a === 'string') {
+                try { const j = JSON.parse(a); if (Array.isArray(j)) return j.filter(Boolean).map(String); } catch (e) { }
+                return a.split(',').map(s => s.trim()).filter(u => /^https?:\/\//i.test(u));
+            }
+            return [];
+        }
+        // file name = last path segment of the URL (works for any org id / folder layout)
+        function rawName(url) {
+            try { return decodeURIComponent(new URL(url).pathname.split('/').pop() || ''); } catch (e) { return ''; }
+        }
+        function attName(url) {
+            // strip the "-<14 digit timestamp>-<8 hex>" suffix added on upload
+            return rawName(url).replace(/-\d{14}-[0-9a-f]{8}(?=\.[^.]+$|$)/i, '') || 'Attachment';
+        }
+        const attExt = n => (n.includes('.') ? n.split('.').pop().slice(0, 5).toUpperCase() : 'FILE');
+
+        function toDate(v) {
+            if (v == null || v === '') return null;
+            const d = /^\d+$/.test(String(v)) ? new Date(Number(v)) : new Date(v);
+            return isNaN(d) ? null : d;
+        }
+        const mailT = m => m.received_at ?? m.sent_at;
+        const mailMs = m => { const d = toDate(mailT(m)); return d ? d.getTime() : 0; };
+
+        function indexMail(m) {
+            m._atts = normAtt(m.attachments);
+            m._attNames = m._atts.map(attName);
+            m._text = contentText(m.content);
+            m._dealIds = idList(m.email_deals);
+            m._nMeta = norm([m.subject, m.from_email, ...extractEmails(m.recipient_email), ...extractEmails(m.cc), ...extractEmails(m.bcc)].join(' '));
+            m._nAtt = norm([...m._attNames, ...m._atts.map(rawName)].join(' '));
+            m._hay = `${m._nMeta} ${m._nAtt} ${norm(m._text)}`;
+            return m;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // CONVERSATIONS  (mails grouped by thread_id)
+        // ═══════════════════════════════════════════════════════════════
+        const groupKey = m => m.thread_id ? 'T:' + m.thread_id : 'M:' + m.id;
+
+        function refreshGroup(g) {
+            g.mails.sort((a, b) => mailMs(b) - mailMs(a));    // newest first
+            g.latest = g.mails[0];
+            g.time = mailMs(g.latest);
+            g.atts = g.mails.reduce((n, m) => n + m._atts.length, 0);
+            g.hay = g.mails.map(m => m._hay).join(' ');
+            g.dealIds = [...new Set(g.mails.flatMap(m => m._dealIds))];
+            g.count = Math.max(g.mails.length, g.count || 0);
+        }
+
+        function addMails(rows) {
+            const touched = new Set();
+            rows.forEach(m => {
+                indexMail(m);
+                const key = groupKey(m);
+                let g = state.groupMap.get(key);
+                if (!g) {
+                    g = { key, threadId: m.thread_id || '', mails: [], count: 0 };
+                    state.groupMap.set(key, g);
+                    state.groups.push(g);
+                }
+                g.mails.push(m);
+                touched.add(g);
+            });
+            touched.forEach(refreshGroup);
+        }
+
+        // real size of each thread (counts mails that fall outside the current scope or filters too)
+        async function fetchThreadCounts(ids, gen) {
+            ids = ids.filter(id => !(id in state.threadCounts));
+            if (!ids.length) return;
+            try {
+                const rows = await query(`SELECT ${F.thread} as thread_id FROM ${EMAIL_OBJECT_SLUG} WHERE ${F.thread} IN (${ids.map(sqlStr).join(',')}) LIMIT 5000 OFFSET 0`, EMAIL_OBJECT_SLUG);
+                if (gen !== state.gen) return;
+                const c = {};
+                rows.forEach(r => { if (r.thread_id) c[r.thread_id] = (c[r.thread_id] || 0) + 1; });
+                ids.forEach(id => { state.threadCounts[id] = c[id] || 0; });
+                state.groups.forEach(g => { if (g.threadId && state.threadCounts[g.threadId]) g.count = Math.max(g.mails.length, state.threadCounts[g.threadId]); });
+                renderList();
+            } catch (e) { console.warn('Could not load thread sizes', e); }
+        }
+
+        async function loadMore() {
+            if (state.loading || state.done) return;
+            state.loading = true; state.error = '';
+            const gen = state.gen;
+            render();
+            try {
+                const rows = await fetchPage();
+                if (gen !== state.gen) return;                   // reloaded meanwhile, drop the stale result
+                state.offset += rows.length;
+                if (rows.length < PAGE_SIZE) state.done = true;
+                const kept = rows.filter(inScope);
+                const hidden = rows.filter(r => !inScope(r));
+                if (hidden.length) console.warn(`[emails] ${hidden.length} mail(s) came back from the query but were hidden by the exact-address check:`, hidden.map(r => ({ id: r.id, from: r.from_email, to: r.recipient_email, cc: r.cc, bcc: r.bcc })));
+                console.info(`[emails] page at offset ${state.offset - rows.length}: ${rows.length} from the API, ${kept.length} shown`);
+                addMails(kept);
+                state.loaded = true;
+                ensureDealNames(kept.flatMap(m => m._dealIds));
+                fetchThreadCounts([...new Set(kept.map(m => m.thread_id).filter(Boolean))], gen);
+            } catch (e) {
+                if (gen !== state.gen) return;
+                console.error(e);
+                state.error = e.message;
+            } finally {
+                if (gen === state.gen) { state.loading = false; render(); }
+            }
+        }
+
+        // wipe everything and query again from page 1
+        function reload() {
+            state.gen++;
+            state.groups = []; state.groupMap = new Map(); state.threadCounts = {}; state.threads = {};
+            state.offset = 0; state.done = false; state.loading = false; state.loaded = false; state.error = '';
+            state.selected = null; state.expanded = new Set(); state.showMiddle = false;
+            state.dealNames = {}; state.convert = {};
+            return loadMore();
+        }
+
+        const searchTokens = () => norm(state.filters.search).split(' ').filter(Boolean);
+        const filtersActive = () => !!(searchTokens().length || state.filters.attach || dateBounds());
+
+        function visibleGroups() {
+            const tokens = searchTokens(), needAtt = state.filters.attach;
+            return state.groups.filter(g => {
+                if (needAtt && !g.atts) return false;
+                return tokens.every(k => g.hay.includes(k));      // every word must appear somewhere in the conversation
+            });
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FORMAT HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        const esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        const TZ = { timeZone: 'Asia/Kolkata' };
+        const dayKeyOf = ms => ms ? new Date(ms).toLocaleDateString('en-CA', TZ) : 'none';
+
+        function dayLabel(ms) {
+            if (!ms) return 'No date';
+            const key = dayKeyOf(ms), now = Date.now();
+            if (key === dayKeyOf(now)) return 'Today';
+            if (key === dayKeyOf(now - 864e5)) return 'Yesterday';
+            const sameYear = key.slice(0, 4) === dayKeyOf(now).slice(0, 4);
+            return new Date(ms).toLocaleDateString('en-IN', { ...TZ, weekday: 'long', day: 'numeric', month: 'long', ...(sameYear ? {} : { year: 'numeric' }) });
+        }
+        const fmtTime = ms => ms ? new Date(ms).toLocaleTimeString('en-IN', { ...TZ, hour: 'numeric', minute: '2-digit', hour12: true }) : '';
+        function fmtFull(v) {
+            const d = toDate(v); if (!d) return '—';
+            return d.toLocaleString('en-IN', { ...TZ, weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true }) + ' IST';
+        }
+        // Gmail-like: time today, weekday + date within a week, date this year, full date otherwise
+        function fmtGmail(v) {
+            const d = toDate(v); if (!d) return '';
+            const time = fmtTime(d.getTime()), now = new Date();
+            if (dayKeyOf(d.getTime()) === dayKeyOf(now.getTime())) return time;
+            const md = d.toLocaleDateString('en-IN', { ...TZ, day: 'numeric', month: 'short' });
+            if ((now - d) / 864e5 < 7) return `${d.toLocaleDateString('en-IN', { ...TZ, weekday: 'short' })} ${md}, ${time}`;
+            const yr = dayKeyOf(d.getTime()).slice(0, 4);
+            return yr === dayKeyOf(now.getTime()).slice(0, 4) ? `${md}, ${time}` : `${md} ${yr}, ${time}`;
+        }
+        const fmtDay = s => { const [y, m, d] = s.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-IN', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric' }); };
+        const initial = s => (String(s).replace(/[^a-z0-9]/gi, '')[0] || '?');
+
+        const dirOf = m => { const d = String(m.direction ?? '').toLowerCase(); return d === 'sent' || d === 'received' ? d : ''; };
+
+        function senderParts(raw) {
+            const s = String(raw ?? '').trim();
+            const m = /^"?([^"<]*?)"?\s*<([^>]+)>$/.exec(s);
+            if (m) return { name: m[1].trim() || m[2].trim(), addr: m[2].trim() };
+            return { name: s, addr: '' };
+        }
+
+        const TINTS = [['#f8cfcd', '#550b15'], ['#fde09b', '#5f1a05'], ['#a6eb84', '#004433'], ['#c7dcfc', '#0c2c5b'], ['#a5dbe2', '#002a2e'], ['#d9d8fc', '#2b0c7b'], ['#f8d4eb', '#570e45'], ['#ffd2b1', '#4a2400']];
+        function tintOf(s) { let h = 0; for (const c of String(s).toLowerCase()) h = (h * 31 + c.charCodeAt(0)) >>> 0; return TINTS[h % TINTS.length]; }
+
+        const clipSvg = (n = 15) => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>`;
+        const chevSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
+        const chevUpSvg = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>';
+
+        // highlight search words inside a text (safe: every piece is escaped)
+        const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        function hl(text, tokens) {
+            if (!tokens.length) return esc(text);
+            const re = new RegExp('(' + tokens.map(reEsc).join('|') + ')', 'ig');
+            return text.split(re).map((p, i) => i % 2 ? `<mark>${esc(p)}</mark>` : esc(p)).join('');
+        }
+
+        // one-line hint under the subject saying WHERE the search matched when it isn't visible in the row already
+        function matchHint(g, tokens) {
+            if (!tokens.length) return '';
+            if (tokens.every(k => g.mails.some(m => m._nMeta.includes(k)))) return '';
+            for (const m of g.mails) {
+                const low = m._text.toLowerCase();
+                const k = tokens.find(t => low.includes(t));
+                if (k) {
+                    const i = low.indexOf(k), s = Math.max(0, i - 30), e = Math.min(m._text.length, i + k.length + 70);
+                    return `<div class="row-snip">${s > 0 ? '…' : ''}${hl(m._text.slice(s, e), tokens)}${e < m._text.length ? '…' : ''}</div>`;
+                }
+            }
+            for (const m of g.mails) {
+                const a = m._attNames.find(n => tokens.some(t => norm(n).includes(t)));
+                if (a) return `<div class="row-snip">Attachment: ${hl(a, tokens)}</div>`;
+            }
+            return '';
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // MAIL BODY  (sandboxed iframe: no scripts, links open in a new tab)
+        // ═══════════════════════════════════════════════════════════════
+        // escaped plain text -> clickable links
+        function linkify(escaped) {
+            return escaped.replace(/https?:\/\/[^\s<>"]+/g, m => {
+                let u = m, tail = '';
+                const t = u.match(/(?:&gt;|&lt;|&quot;|[).,;!?\]])+$/);
+                if (t) { tail = t[0]; u = u.slice(0, u.length - tail.length); }
+                return `<a href="${u}">${u}</a>${tail}`;
+            });
+        }
+
+        // html_content first, then content (HTML or plain text)
+        function pickBody(b) {
+            const html = b.html_content && String(b.html_content).trim() ? String(b.html_content) : '';
+            const text = b.content && String(b.content).trim() ? String(b.content) : '';
+            const remote = s => /<img[^>]+src\s*=\s*["']?https?:/i.test(s);
+            if (html) return { html, hasRemoteImg: remote(html) };
+            if (text && looksHtml(text)) return { html: text, hasRemoteImg: remote(text) };
+            if (text) return { html: `<div class="plain">${linkify(esc(text))}</div>`, hasRemoteImg: false };
+            return { html: '<div class="none">This mail has no content.</div>', hasRemoteImg: false };
+        }
+
+        function buildDoc(b) {
+            const { html } = pickBody(b);
+            const img = state.showImages ? 'data: https: http:' : 'data:';
+            const csp = `default-src 'none'; style-src 'unsafe-inline'; img-src ${img}; font-src data:`;
+            return `<!DOCTYPE html><html><head><meta charset="utf-8">` +
+                `<meta http-equiv="Content-Security-Policy" content="${csp}"><base target="_blank">` +
+                `<style>body{margin:0;font:14px/1.6 Inter,-apple-system,'Segoe UI',Roboto,sans-serif;color:#1f2937;overflow-wrap:anywhere}` +
+                `img{max-width:100%;height:auto}table{max-width:100%}a{color:#175259}` +
+                `blockquote{margin:8px 0 8px 4px;padding-left:12px;border-left:3px solid #e5e7eb;color:#6b7280}` +
+                `.plain{white-space:pre-wrap}.none{color:#9ca3af}</style></head><body>${html}</body></html>`;
+        }
+
+        const openThread = () => { const t = state.threads[state.selected]; return t && t.status === 'ok' ? t.mails : []; };
+
+        function mountMailBody(mid) {
+            const host = [...$('read').querySelectorAll('.gm-body')].find(e => e.dataset.mid === mid);
+            const m = openThread().find(x => x.id === mid);
+            if (!host || !m) return;
+            host.innerHTML = '';
+            const fr = document.createElement('iframe');
+            fr.className = 'body-frame';
+            fr.title = 'Message';
+            fr.setAttribute('sandbox', 'allow-same-origin allow-popups allow-popups-to-escape-sandbox');
+            host.appendChild(fr);
+            const fit = () => {
+                try {
+                    const d = fr.contentDocument;
+                    if (d && d.documentElement) fr.style.height = Math.max(40, d.documentElement.scrollHeight) + 'px';
+                } catch (e) { }
+            };
+            fr.addEventListener('load', () => {
+                fit();
+                try { new ResizeObserver(fit).observe(fr.contentDocument.documentElement); } catch (e) { }
+                try { fr.contentDocument.addEventListener('click', closeFilters); } catch (e) { }   // click inside a mail = outside the popover
+            });
+            fr.srcdoc = buildDoc(m);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // DEALS  (name + link when the mail has a deal, "Convert to deal" when it has none)
+        // ═══════════════════════════════════════════════════════════════
+        const DEAL_ICON = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>';
+        const PLUS_ICON = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>';
+        const CHECK_ICON = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+        const DEAL_TINTS = [['#e0f2fe', '#075985'], ['#fce7f3', '#9d174d'], ['#ede9fe', '#5b21b6'], ['#fef3c7', '#92400e'], ['#dcfce7', '#166534'], ['#ffedd5', '#9a3412']];
+        const dealTint = id => { let h = 0; for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0; return DEAL_TINTS[h % DEAL_TINTS.length]; };
+
+        // names of the deals linked to the loaded mails (one query for all the ids not known yet)
+        async function ensureDealNames(ids) {
+            ids = [...new Set(ids)].filter(id => id && !(id in state.dealNames) && !state.dealPending.has(id));
+            if (!ids.length) return;
+            ids.forEach(id => state.dealPending.add(id));
+            try {
+                const cols = DEAL_LABEL_FIELDS.map((f, i) => `${f} as deal_label_${i}`).join(', ');
+                const rows = await query(`SELECT id, ${cols} FROM ${DEAL_OBJECT_SLUG} WHERE id IN (${ids.map(sqlStr).join(',')}) LIMIT ${ids.length} OFFSET 0`, DEAL_OBJECT_SLUG);
+                rows.forEach(r => {
+                    const label = DEAL_LABEL_FIELDS.map((f, i) => String(r['deal_label_' + i] ?? '').trim()).find(Boolean);
+                    state.dealNames[r.id] = label || r.id;
+                });
+                ids.forEach(id => { if (!(id in state.dealNames)) state.dealNames[id] = id; });   // deal not found: show its id
+                state.dealVer++;
+            } catch (e) {
+                console.warn('Could not load deal names', e);                                       // chips fall back to the id
+            } finally {
+                ids.forEach(id => state.dealPending.delete(id));
+            }
+            renderList();
+            renderRead();
+        }
+
+        function dealLinkHtml(id) {
+            const label = id in state.dealNames ? state.dealNames[id] : (state.dealPending.has(id) ? 'Deal…' : id);
+            const [bg, fg] = dealTint(id);
+            return `<a class="deal-chip" href="${esc(DEAL_URL(id))}" target="_blank" rel="noopener noreferrer" style="background:${bg};color:${fg}" title="Open deal: ${esc(label)}">${DEAL_ICON}<span>${esc(label)}</span></a>`;
+        }
+
+        const convStatus = key => (state.convert[key] || {}).status || 'idle';
+        const convError = key => (state.convert[key] || {}).error || '';
+        function convertBtnInner(key) {
+            const s = convStatus(key);
+            if (s === 'sending') return '<span class="mini-spin"></span> Converting…';
+            if (s === 'sent') return CHECK_ICON + ' Request sent';
+            if (s === 'error') return 'Failed — retry';
+            return PLUS_ICON + ' Convert to deal';
+        }
+        const convertBtnDisabled = key => convStatus(key) === 'sending' || convStatus(key) === 'sent';
+        const convertBtnHtml = (key, emailId) =>
+            `<button type="button" class="convert-btn ${convStatus(key)}" data-convert="${esc(key)}" data-email="${esc(emailId)}" ${convertBtnDisabled(key) ? 'disabled' : ''} title="${esc(convError(key) || 'Create a deal for this contact')}">${convertBtnInner(key)}</button>`;
+
+        // deal chips when the mail(s) have a deal, otherwise the convert button (each button keeps its own state)
+        const dealAreaHtml = (ids, key, emailId) => ids.length ? ids.map(dealLinkHtml).join('') : convertBtnHtml(key, emailId);
+
+        // update only the button(s) of this key, in place (keeps scroll position and open mail bodies)
+        function syncConvertButtons(key) {
+            document.querySelectorAll('.convert-btn').forEach(b => {
+                if (b.dataset.convert !== key) return;
+                b.className = 'convert-btn ' + convStatus(key);
+                b.disabled = convertBtnDisabled(key);
+                b.title = convError(key) || 'Create a deal for this contact';
+                b.innerHTML = convertBtnInner(key);
+            });
+        }
+
+        // after a successful request, re-read email_deals of the loaded mails: the automation may have linked them to the new deal
+        async function refreshMailDeals() {
+            try {
+                const byId = new Map();
+                const add = m => { const a = byId.get(m.id) || []; a.push(m); byId.set(m.id, a); };
+                state.groups.forEach(g => g.mails.forEach(add));
+                Object.values(state.threads).forEach(t => { if (t.status === 'ok') t.mails.forEach(add); });
+                const ids = [...byId.keys()];
+                for (let i = 0; i < ids.length; i += 200) {
+                    const part = ids.slice(i, i + 200);
+                    const rows = await query(`SELECT id, ${F.deals} as email_deals FROM ${EMAIL_OBJECT_SLUG} WHERE id IN (${part.map(sqlStr).join(',')}) LIMIT ${part.length} OFFSET 0`, EMAIL_OBJECT_SLUG);
+                    rows.forEach(r => (byId.get(r.id) || []).forEach(m => { m.email_deals = r.email_deals; m._dealIds = idList(r.email_deals); }));
+                }
+                state.groups.forEach(refreshGroup);
+                const all = [...byId.values()].flat().flatMap(m => m._dealIds);
+                state.dealVer++;
+                await ensureDealNames(all);
+                renderList();
+                renderRead();
+            } catch (e) { console.warn('Could not refresh deals', e); }
+        }
+
+        // send the contact to the "convert to deal" webhook (one request per click, only for the button that was clicked)
+        async function convertToDeal(key, emailId) {
+            if (convertBtnDisabled(key)) return;
+            state.convert[key] = { status: 'sending', error: '' };
+            syncConvertButtons(key);
+            try {
+                const r = await fetch(CONVERT_WEBHOOK, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contact_id: scopeId, contact_email: contactAddrs[0], email_id: emailId })
+                });
+                const raw = await r.text();
+                let body = null; try { body = JSON.parse(raw); } catch (e) { }
+                if (!r.ok) throw new Error(body?.error || body?.message || `Webhook responded ${r.status}`);
+                if (body && (body.success === false || body.error)) throw new Error(body.error || body.message || 'Could not convert to deal');
+                state.convert[key] = { status: 'sent', error: '' };
+                syncConvertButtons(key);
+                await refreshMailDeals();
+            } catch (e) {
+                console.error(e);
+                state.convert[key] = { status: 'error', error: e.message };
+                syncConvertButtons(key);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // THREAD VIEW  (Gmail-style, like the Razorpay timeline modal)
+        // ═══════════════════════════════════════════════════════════════
+        function attChips(list) {
+            if (!list.length) return '';
+            return '<div class="atts">' + list.map(u => {
+                const n = attName(u);
+                return `<a class="att" href="${esc(u)}" target="_blank" rel="noopener noreferrer" title="${esc(n)}">${clipSvg()}<span class="nm">${esc(n)}</span><span class="ext">${esc(attExt(n))}</span></a>`;
+            }).join('') + '</div>';
+        }
+
+        function mailItemHtml(m, n) {
+            const sp = senderParts(m.from_email);
+            const name = sp.name || 'Unknown';
+            const [bg, fg] = tintOf(name);
+            const av = `<div class="gm-avatar" style="background:${bg};color:${fg}">${esc(initial(name))}</div>`;
+            const when = fmtGmail(mailT(m));
+            const atts = normAtt(m.attachments);
+
+            if (!state.expanded.has(m.id)) {
+                const snip = contentText(m.content || m.html_content).slice(0, 120);
+                return `<div class="gm-item collapsed" data-mid="${esc(m.id)}">${av}
+                    <div class="gm-main"><div class="gm-name">${esc(name)}</div><div class="gm-snip">${esc(snip)}</div></div>
+                    <div class="gm-right">${atts.length ? clipSvg(13) : ''}<span class="gm-date">${esc(when)}</span>${chevSvg}</div></div>`;
+            }
+
+            const d = dirOf(m);
+            const rc = (label, v) => { const a = extractEmails(v); return a.length ? `<span><b>${label}</b>${a.map(esc).join(', ')}</span>` : ''; };
+            const rcpt = [rc('to', m.recipient_email), rc('cc', m.cc), rc('bcc', m.bcc)].join('');
+            return `<div class="gm-item expanded" data-mid="${esc(m.id)}">${av}
+                <div class="gm-content">
+                    <div class="gm-head">
+                        <div class="gm-from"><span class="gm-name">${esc(name)}</span>${sp.addr && sp.addr !== name ? `<span class="gm-addr">&lt;${esc(sp.addr)}&gt;</span>` : ''}${d ? `<span class="dir-tag ${d}">${d === 'sent' ? 'Sent' : 'Received'}</span>` : ''}</div>
+                        <div class="gm-right"><span class="gm-date" title="${esc(fmtFull(mailT(m)))}">${esc(when)}</span><button class="gm-iconbtn" type="button" data-reply="${esc(m.id)}" title="Reply all" aria-label="Reply all">${REPLY_ALL_SVG}</button>${n > 1 ? `<button class="gm-collapse" type="button" title="Collapse" aria-label="Collapse">${chevUpSvg}</button>` : ''}</div>
+                    </div>
+                    <div class="gm-deal">${dealAreaHtml(m._dealIds || [], m.id, m.id)}</div>
+                    ${rcpt ? `<div class="gm-rcpt">${rcpt}</div>` : ''}
+                    ${attChips(atts)}
+                    <div class="gm-body" data-mid="${esc(m.id)}"></div>
+                    <div class="gm-actions"><button type="button" class="reply-btn" data-reply="${esc(m.id)}">${REPLY_ALL_SVG} Reply all</button></div>
+                </div></div>`;
+        }
+
+        function threadHtml(mails) {
+            const n = mails.length, hidden = n > 5 && !state.showMiddle;     // long threads: first, "N more", last two
+            let html = '';
+            mails.forEach((m, i) => {
+                if (hidden && i >= 1 && i <= n - 3) {
+                    if (i === 1) html += `<div class="gm-expander" id="gm-expander" title="Show all messages"><span class="gm-count">${n - 3}</span><span>more messages</span></div>`;
+                    return;
+                }
+                html += mailItemHtml(m, n) + composerHtml(m);
+            });
+            return html;
+        }
+
+        function toggleItem(mid, open) {
+            if (open) state.expanded.add(mid); else state.expanded.delete(mid);
+            const mails = openThread(), m = mails.find(x => x.id === mid);
+            const el = [...$('read').querySelectorAll('.gm-item')].find(e => e.dataset.mid === mid);
+            if (!m || !el) return;
+            el.outerHTML = mailItemHtml(m, mails.length);
+            if (open) mountMailBody(mid);
+        }
+
+        async function ensureThread(key, silent = false) {
+            const g = state.groupMap.get(key); if (!g) return;
+            const cur = state.threads[key];
+            if (cur && cur.status !== 'error' && !silent) return;
+            if (!silent) {
+                state.threads[key] = { status: 'loading' };
+                renderRead();
+            }
+            try {
+                const mails = await fetchThread(g);
+                if (!mails.length) throw new Error('Conversation not found');
+                await ensureDealNames(mails.flatMap(m => m._dealIds));       // names first, so the thread draws once
+                state.threads[key] = { status: 'ok', mails, ver: ((cur && cur.ver) || 0) + (silent ? 1 : 0) };
+                g.count = Math.max(g.count, mails.length);
+                if (state.selected === key) {
+                    if (silent) state.expanded.add(mails[mails.length - 1].id);          // a refresh after sending keeps what was open and shows the new mail
+                    else { state.expanded = new Set([mails[mails.length - 1].id]); state.showMiddle = false; }
+                }
+            } catch (e) {
+                console.error(e);
+                if (!silent) state.threads[key] = { status: 'error', error: e.message };
+            }
+            if (state.selected === key) { renderRead(); renderList(); }
+        }
+
+        function selectThread(key) {
+            state.selected = key;
+            state.showMiddle = false;
+            const t = state.threads[key];
+            state.expanded = new Set(t && t.status === 'ok' ? [t.mails[t.mails.length - 1].id] : []);
+            renderList();
+            renderRead();
+            ensureThread(key);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // REPLY ALL  (composer under each mail: recipients, subject, rich text, attachments and images)
+        // ═══════════════════════════════════════════════════════════════
+        state.drafts = {};            // mail id -> draft being written
+        let _uid = 0;
+
+        const REPLY_ALL_SVG = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17l-5-5 5-5M12 17l-5-5 5-5M22 18v-2a4 4 0 0 0-4-4H7"/></svg>';
+        const IMAGE_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+
+        const authHeaders = () => {
+            const h = { 'Authorization': `Bearer ${token}`, 'client-id': CLIENT_ID, 'client-secret': CLIENT_SECRET };
+            if (PLATFORM_ID) h['platform-id'] = PLATFORM_ID;
+            return h;
+        };
+        // replies are always sent FROM the logged-in user (REPLY_FROM can force another address)
+        const fromAddr = () => REPLY_FROM || state.me.email;
+        const senderNameFor = from => from.toLowerCase() === state.me.email.toLowerCase() ? (state.me.name || from) : from;
+        const isEmail = s => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+        const dedupe = list => { const seen = new Set(); return list.filter(a => { const k = String(a).toLowerCase(); if (!a || seen.has(k)) return false; seen.add(k); return true; }); };
+        const fmtSize = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+        const fmtAttr = v => {
+            const d = toDate(v); if (!d) return '';
+            return d.toLocaleString('en-GB', { ...TZ, day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+        };
+
+        function toast(msg, kind) {
+            let t = $('toast');
+            if (!t) { t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t); }
+            t.textContent = msg;
+            t.className = 'toast show' + (kind === 'err' ? ' err' : '');
+            clearTimeout(toast._t);
+            toast._t = setTimeout(() => { t.className = 'toast'; }, 3500);
+        }
+
+        // the reply goes to the contact; everyone else who was on the mail (sender, To, Cc) stays in Cc, minus you and the contact. Bcc is never copied.
+        function replyTargets(m, from) {
+            const low = a => a.toLowerCase();
+            const skip = new Set([state.me.email, from, ...contactAddrs].map(low));
+            const cc = dedupe([...extractEmails(m.from_email), ...extractEmails(m.recipient_email), ...extractEmails(m.cc)].filter(a => !skip.has(low(a))));
+            return { to: [contactAddrs[0]], cc };
+        }
+
+        function newDraft(m) {
+            const subj = String(m.subject || '').trim();
+            const t = replyTargets(m, fromAddr());
+            return { open: true, from: fromAddr(), to: t.to, cc: t.cc, bcc: [], showBcc: false, subject: /^\s*re\s*:/i.test(subj) ? subj : 'Re: ' + subj,
+                html: '', quote: true, files: [], uploading: 0, sending: false, error: '' };
+        }
+
+        const composerEl = mid => [...$('read').querySelectorAll('.gm-compose')].find(e => e.dataset.cid === mid);
+        const itemEl = mid => [...$('read').querySelectorAll('.gm-item')].find(e => e.dataset.mid === mid);
+
+        const chipsHtml = (field, list) => list.map((a, i) =>
+            `<span class="cp-chip">${esc(a)}<button type="button" class="cp-x" data-field="${field}" data-i="${i}" aria-label="Remove ${esc(a)}">×</button></span>`).join('');
+
+        const filesHtml = d => d.files.map(f =>
+            `<span class="cp-file ${f.status}" title="${esc(f.error || f.name)}">${f.status === 'uploading' ? '<span class="cp-spin"></span>' : clipSvg(13)}<span class="cp-fn">${esc(f.name)}</span><span class="cp-fs">${f.status === 'error' ? 'failed' : fmtSize(f.size)}</span><button type="button" class="cp-file-x" data-fid="${f.id}" aria-label="Remove">×</button></span>`).join('');
+
+        function composerHtml(m) {
+            const d = state.drafts[m.id];
+            if (!d || !d.open) return '';
+            const row = (label, field, list, extra) =>
+                `<div class="cp-row"><span class="cp-l">${label}</span><div class="cp-chips" data-field="${field}">${chipsHtml(field, list)}<input class="cp-input" data-field="${field}" type="text" placeholder="${list.length ? '' : 'name@example.com'}" autocomplete="off"></div>${extra || ''}</div>`;
+            return `<div class="gm-compose" data-cid="${esc(m.id)}">
+                <div class="cp-top"><span class="cp-title">Reply all</span><button type="button" class="cp-close" title="Discard" aria-label="Discard">×</button></div>
+                <div class="cp-row"><span class="cp-l">From</span><input class="cp-fromin" type="text" value="${esc(d.from)}" readonly spellcheck="false" title="Replies are sent from your own email"></div>
+                ${row('To', 'to', d.to)}
+                ${row('Cc', 'cc', d.cc, d.showBcc ? '' : '<button type="button" class="cp-link cp-bcc-toggle">Bcc</button>')}
+                ${d.showBcc ? row('Bcc', 'bcc', d.bcc) : ''}
+                <div class="cp-row"><span class="cp-l">Subject</span><input class="cp-subject" type="text" value="${esc(d.subject)}"></div>
+                <div class="cp-editor" contenteditable="true" data-placeholder="Write your reply…"></div>
+                <label class="cp-quote"><input type="checkbox" class="cp-quote-cb" ${d.quote ? 'checked' : ''}> Include the original message below your reply</label>
+                <div class="cp-files">${filesHtml(d)}</div>
+                <div class="cp-bar">
+                    <div class="cp-tools">
+                        <button type="button" class="cp-fmt" data-cmd="bold" title="Bold"><b>B</b></button>
+                        <button type="button" class="cp-fmt" data-cmd="italic" title="Italic"><i>I</i></button>
+                        <button type="button" class="cp-fmt" data-cmd="underline" title="Underline"><u>U</u></button>
+                        <button type="button" class="cp-fmt" data-cmd="insertUnorderedList" title="Bulleted list">• List</button>
+                        <button type="button" class="cp-fmt" data-cmd="insertOrderedList" title="Numbered list">1. List</button>
+                        <span class="cp-sep"></span>
+                        <button type="button" class="cp-tool cp-attach" title="Attach files" aria-label="Attach files">${clipSvg(16)}</button>
+                        <button type="button" class="cp-tool cp-image" title="Insert image" aria-label="Insert image">${IMAGE_SVG}</button>
+                    </div>
+                    <div class="cp-err">${esc(d.error)}</div>
+                    <div class="cp-actions">
+                        <button type="button" class="btn cp-discard">Discard</button>
+                        <button type="button" class="cp-send" ${d.sending || d.uploading ? 'disabled' : ''}>${d.sending ? 'Sending…' : 'Send'}</button>
+                    </div>
+                </div>
+                <input type="file" class="cp-file-input" multiple hidden>
+                <input type="file" class="cp-image-input" accept="image/*" multiple hidden>
+            </div>`;
+        }
+
+        // put the saved text back into a freshly drawn composer
+        function mountComposer(mid) {
+            const c = composerEl(mid), d = state.drafts[mid]; if (!c || !d) return;
+            c.querySelector('.cp-editor').innerHTML = d.html;
+        }
+        const mountComposers = () => [...$('read').querySelectorAll('.gm-compose')].forEach(c => mountComposer(c.dataset.cid));
+
+        function openComposer(mid) {
+            const m = openThread().find(x => x.id === mid); if (!m) return;
+            if (!state.drafts[mid]) state.drafts[mid] = newDraft(m);
+            state.drafts[mid].open = true;
+            let c = composerEl(mid);
+            if (!c) {
+                const it = itemEl(mid); if (!it) return;
+                it.insertAdjacentHTML('afterend', composerHtml(m));
+                mountComposer(mid);
+                c = composerEl(mid);
+            }
+            const ed = c.querySelector('.cp-editor');
+            ed.focus();
+            if (c.scrollIntoView) c.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        }
+        function closeComposer(mid) {
+            delete state.drafts[mid];
+            const c = composerEl(mid); if (c) c.remove();
+        }
+
+        function setErr(mid, msg) {
+            const d = state.drafts[mid], c = composerEl(mid); if (!d) return;
+            d.error = msg || '';
+            if (c) c.querySelector('.cp-err').textContent = d.error;
+        }
+        function syncSend(mid) {
+            const d = state.drafts[mid], c = composerEl(mid); if (!d || !c) return;
+            const b = c.querySelector('.cp-send');
+            b.disabled = !!(d.sending || d.uploading);
+            b.textContent = d.sending ? 'Sending…' : 'Send';
+        }
+        function renderChips(mid, field) {
+            const c = composerEl(mid), d = state.drafts[mid]; if (!c || !d) return;
+            const box = c.querySelector(`.cp-chips[data-field="${field}"]`);
+            box.querySelectorAll('.cp-chip').forEach(x => x.remove());
+            box.insertAdjacentHTML('afterbegin', chipsHtml(field, d[field]));
+        }
+        function commitField(mid, field) {
+            const c = composerEl(mid), d = state.drafts[mid]; if (!c || !d) return;
+            const inp = c.querySelector(`.cp-input[data-field="${field}"]`);
+            const bad = [];
+            inp.value.split(/[,;\s]+/).map(s => s.trim()).filter(Boolean).forEach(p => {
+                if (!isEmail(p)) bad.push(p);
+                else if (!d[field].some(x => x.toLowerCase() === p.toLowerCase())) d[field].push(p);
+            });
+            inp.value = bad.join(', ');
+            inp.closest('.cp-chips').classList.toggle('invalid', bad.length > 0);
+            renderChips(mid, field);
+        }
+        function refreshFiles(mid) {
+            const d = state.drafts[mid], c = composerEl(mid); if (!d || !c) return;
+            c.querySelector('.cp-files').innerHTML = filesHtml(d);
+            syncSend(mid);
+        }
+
+        // ── uploads (attachments and inline images share the same upload endpoint) ──
+        function pickUploadUrl(j) {
+            let d = j && (j.data !== undefined ? j.data : j);
+            if (Array.isArray(d)) d = d[0];
+            if (typeof d === 'string') return d;
+            if (!d) return '';
+            const c = [d.url, d.file_url, d.link, d.public_url, d.location, d.path, d.file && d.file.url, d.data && d.data.url];
+            return c.find(x => typeof x === 'string' && x) || '';
+        }
+        async function uploadFile(file) {
+            const fd = new FormData();
+            fd.append('file', file, file.name);
+            fd.append('is_private', 'false');
+            const r = await fetch(UPLOAD_URL, { method: 'POST', headers: authHeaders(), body: fd });   // the browser sets the multipart boundary
+            const raw = await r.text();
+            let j = null; try { j = JSON.parse(raw); } catch (e) { }
+            if (!r.ok || (j && j.success === false)) throw new Error((j && ((j.data && j.data.message) || j.message)) || `Upload failed (${r.status})`);
+            const url = pickUploadUrl(j);
+            if (!url) { console.warn('Upload response', j || raw); throw new Error('Uploaded, but no file link came back'); }
+            return { name: file.name, size: file.size, type: (file.type || '').split('/')[1] || '', url };
+        }
+
+        function insertImage(mid, url, alt) {
+            const d = state.drafts[mid], c = composerEl(mid); if (!d) return;
+            const img = `<img src="${esc(url)}" alt="${esc(alt)}" style="max-width:100%;height:auto">`;
+            if (!c) { d.html += img; return; }
+            const ed = c.querySelector('.cp-editor');
+            ed.focus();
+            const sel = window.getSelection();
+            if (!sel.rangeCount || !ed.contains(sel.anchorNode)) {      // no caret inside the editor: add at the end
+                const r = document.createRange(); r.selectNodeContents(ed); r.collapse(false);
+                sel.removeAllRanges(); sel.addRange(r);
+            }
+            let done = false;
+            try { done = document.execCommand('insertHTML', false, img); } catch (e) { }
+            if (!done) ed.insertAdjacentHTML('beforeend', img);
+            d.html = ed.innerHTML;
+        }
+
+        async function addFiles(mid, files, asImage) {
+            const d = state.drafts[mid]; if (!d) return;
+            for (const file of files) {
+                const rec = { id: ++_uid, name: file.name, size: file.size, status: 'uploading' };
+                d.uploading++;
+                if (!asImage) { d.files.push(rec); refreshFiles(mid); } else syncSend(mid);
+                try {
+                    const up = await uploadFile(file);
+                    if (asImage) insertImage(mid, up.url, file.name);
+                    else { rec.url = up.url; rec.type = up.type; rec.status = 'ok'; }
+                } catch (e) {
+                    console.error(e);
+                    rec.status = 'error'; rec.error = e.message;
+                    setErr(mid, `Could not upload ${file.name}: ${e.message}`);
+                    if (asImage) { /* nothing was added to the message */ }
+                } finally {
+                    d.uploading--;
+                    if (!asImage) refreshFiles(mid); else syncSend(mid);
+                }
+            }
+        }
+
+        // ── send ──
+        // the original message goes below the reply as a quote: drop the page wrapper and the open-tracking pixel,
+        // otherwise the original sender's "opened" tracking fires again whenever the reply is opened
+        function cleanQuote(html) {
+            return String(html)
+                .replace(/<!DOCTYPE[^>]*>/gi, '')
+                .replace(/<head[\s\S]*?<\/head>/gi, '')
+                .replace(/<\/?(html|body)\b[^>]*>/gi, '')
+                .replace(/<script[\s\S]*?<\/script>/gi, '')
+                .replace(/<img\b[^>]*>/gi, tag => {
+                    const src = (tag.match(/\bsrc\s*=\s*["']([^"']*)["']/i) || [])[1] || '';
+                    const w = (tag.match(/(?<![\w-])width\s*[=:]\s*["']?(\d+)/i) || [])[1];
+                    const h = (tag.match(/(?<![\w-])height\s*[=:]\s*["']?(\d+)/i) || [])[1];
+                    const tracker = /\/email\/open\b|mailtrack\.io|\/track(ing)?\//i.test(src);
+                    const pixel = w !== undefined && h !== undefined && +w <= 1 && +h <= 1;
+                    return tracker || pixel ? '' : tag;
+                })
+                .trim();
+        }
+
+        function buildReplyBody(m, d) {
+            let html = `<div class="paragraph">${d.html}</div>`;
+            if (d.quote) {
+                const addr = extractEmails(m.from_email)[0] || senderParts(m.from_email).addr;
+                const nm = senderParts(m.from_email).name;
+                const who = (nm && nm !== addr ? esc(nm) + ' ' : '') + `&lt;${esc(addr)}&gt;`;
+                const orig = cleanQuote(pickBody(m).html);
+                html += `<div class="gmail_attr" style="font-size:0.85em;">On ${esc(fmtAttr(mailT(m)))}, ${who} wrote:</div>` +
+                    `<blockquote class="gmail_quote" style="border-left:1px solid #ccc;padding-left:1ex;margin:0 0 0 0.8ex;">${orig}</blockquote>`;
+            }
+            return html;
+        }
+
+        // build the request body for one recipient shape
+        function replyPayload(m, d, shape) {
+            return {
+                record_context: replyRecordContext(m),
+                custom_emails: d.to.map(a => ({ to: a })),
+                cc: d.cc.map(shape),
+                bcc: d.bcc.map(shape),
+                parent_email_id: m.id,
+                from: d.from,
+                sender_name: senderNameFor(d.from),
+                subject: d.subject,
+                body: buildReplyBody(m, d),
+                content_type: 'text/html',
+                attachments: d.files.filter(f => f.status === 'ok').map(ATTACHMENT_PAYLOAD),
+            };
+        }
+
+        let _shape = 0;   // index of the Cc/Bcc shape the API accepted last time
+        async function postReply(m, d) {
+            const hasCopies = d.cc.length || d.bcc.length;
+            for (let i = _shape; i < RECIPIENT_SHAPES.length; i++) {
+                const r = await fetch(SEND_URL, { method: 'POST', headers: { ...authHeaders(), 'Content-Type': 'application/json' }, body: JSON.stringify(replyPayload(m, d, RECIPIENT_SHAPES[i])) });
+                const raw = await r.text();
+                let j = null; try { j = JSON.parse(raw); } catch (e) { }
+                if (r.ok && !(j && j.success === false)) { if (hasCopies) _shape = i; return; }
+                const msg = (j && ((j.data && j.data.message) || j.message)) || `Send failed (${r.status})`;
+                // a 400 type error means nothing was sent, so the next shape can be tried safely
+                const typeError = r.status === 400 && /unmarshal|SendTo/i.test(msg);
+                if (!(hasCopies && typeError && i < RECIPIENT_SHAPES.length - 1)) throw new Error(msg);
+            }
+        }
+
+        async function sendReply(mid) {
+            const d = state.drafts[mid], m = openThread().find(x => x.id === mid), c = composerEl(mid);
+            if (!d || !m || !c || d.sending) return;
+            ['to', 'cc', 'bcc'].forEach(f => { const i = c.querySelector(`.cp-input[data-field="${f}"]`); if (i && i.value.trim()) commitField(mid, f); });
+            const ed = c.querySelector('.cp-editor');
+            d.html = ed.innerHTML;
+            d.subject = c.querySelector('.cp-subject').value.trim();
+            d.from = c.querySelector('.cp-fromin').value.trim();
+            if (!isEmail(d.from)) return setErr(mid, 'Enter a valid From address.');
+            if (c.querySelector('.cp-chips.invalid')) return setErr(mid, 'Fix or remove the invalid email address.');
+            if (!d.to.length) return setErr(mid, 'Add at least one recipient.');
+            if (!d.subject) return setErr(mid, 'Add a subject.');
+            if (!ed.textContent.trim() && !ed.querySelector('img')) return setErr(mid, 'Write a message first.');
+            if (d.uploading) return setErr(mid, 'Wait for the uploads to finish.');
+            if (d.files.some(f => f.status === 'error')) return setErr(mid, 'Remove the files that failed to upload.');
+
+            setErr(mid, '');
+            d.sending = true; syncSend(mid);
+            const key = state.selected;
+            try {
+                await postReply(m, d);
+                closeComposer(mid);
+                toast('Reply sent');
+                refreshThreadAfterSend(key);
+            } catch (e) {
+                console.error(e);
+                d.sending = false; syncSend(mid);
+                setErr(mid, e.message);
+            }
+        }
+
+        // after a send, reload the open conversation ONCE (a short wait gives the platform time to store the sent mail)
+        async function refreshThreadAfterSend(key) {
+            await sleep(1500);
+            await ensureThread(key, true);
+        }
+
+        // bold / italic / underline / lists. Lists have a manual fallback for browsers where execCommand does not build them.
+        function listFallback(ed, ordered) {
+            const sel = window.getSelection();
+            const inside = sel.rangeCount && ed.contains(sel.anchorNode);
+            const r = inside ? sel.getRangeAt(0) : null;
+            let text = '';
+            if (r) {                                                            // <br> and block ends count as line breaks (Range.toString() would drop them)
+                const tmp = document.createElement('div');
+                tmp.appendChild(r.cloneContents());
+                tmp.querySelectorAll('br').forEach(b => b.replaceWith('\n'));
+                tmp.querySelectorAll('div,p,li').forEach(el => el.insertAdjacentText('afterend', '\n'));
+                text = tmp.textContent;
+            }
+            const lines = text.split(/\n+/).map(s => s.trim()).filter(Boolean);
+            const list = document.createElement(ordered ? 'ol' : 'ul');
+            (lines.length ? lines : ['']).forEach(t => {
+                const li = document.createElement('li');
+                if (t) li.textContent = t; else li.innerHTML = '<br>';
+                list.appendChild(li);
+            });
+            if (r) { r.deleteContents(); r.insertNode(list); } else ed.appendChild(list);
+            const rr = document.createRange();                                 // caret at the end of the last item, ready to type
+            rr.selectNodeContents(list.lastChild); rr.collapse(false);
+            sel.removeAllRanges(); sel.addRange(rr);
+        }
+        function applyFormat(ed, cmd) {
+            ed.focus();
+            const before = ed.innerHTML;
+            let ok = false;
+            try { ok = document.execCommand(cmd, false, null); } catch (e) { }
+            if ((cmd === 'insertUnorderedList' || cmd === 'insertOrderedList') && (!ok || ed.innerHTML === before)) listFallback(ed, cmd === 'insertOrderedList');
+        }
+
+        // clicks inside the reading pane that belong to reply / composer; returns true when handled
+        function handleComposerClick(e) {
+            const rep = e.target.closest('[data-reply]');
+            if (rep) { openComposer(rep.dataset.reply); return true; }
+            const c = e.target.closest('.gm-compose'); if (!c) return false;
+            const mid = c.dataset.cid, d = state.drafts[mid]; if (!d) return true;
+            if (e.target.closest('.cp-close, .cp-discard')) { closeComposer(mid); return true; }
+            if (e.target.closest('.cp-send')) { sendReply(mid); return true; }
+            if (e.target.closest('.cp-attach')) { c.querySelector('.cp-file-input').click(); return true; }
+            if (e.target.closest('.cp-image')) { c.querySelector('.cp-image-input').click(); return true; }
+            const fmt = e.target.closest('.cp-fmt');
+            if (fmt) {
+                const ed = c.querySelector('.cp-editor');
+                applyFormat(ed, fmt.dataset.cmd);
+                d.html = ed.innerHTML;
+                return true;
+            }
+            const x = e.target.closest('.cp-x');
+            if (x) { d[x.dataset.field].splice(+x.dataset.i, 1); renderChips(mid, x.dataset.field); return true; }
+            const fx = e.target.closest('.cp-file-x');
+            if (fx) { d.files = d.files.filter(f => String(f.id) !== fx.dataset.fid); refreshFiles(mid); return true; }
+            if (e.target.closest('.cp-bcc-toggle')) {
+                const m = openThread().find(y => y.id === mid);
+                d.html = c.querySelector('.cp-editor').innerHTML; d.subject = c.querySelector('.cp-subject').value;
+                d.showBcc = true;
+                c.outerHTML = composerHtml(m);
+                mountComposer(mid);
+                return true;
+            }
+            return true;
+        }
+
+        function wireComposer() {
+            const read = $('read');
+            read.addEventListener('mousedown', e => { if (e.target.closest('.cp-fmt')) e.preventDefault(); });   // keep the selection in the editor
+            read.addEventListener('input', e => {
+                const c = e.target.closest('.gm-compose'); if (!c) return;
+                const d = state.drafts[c.dataset.cid]; if (!d) return;
+                if (e.target.matches('.cp-editor')) d.html = e.target.innerHTML;
+                else if (e.target.matches('.cp-subject')) d.subject = e.target.value;
+                else if (e.target.matches('.cp-fromin')) d.from = e.target.value.trim();
+                else if (e.target.matches('.cp-input') && /[,;\s]/.test(e.target.value)) commitField(c.dataset.cid, e.target.dataset.field);
+            });
+            read.addEventListener('keydown', e => {
+                const c = e.target.closest('.gm-compose'); if (!c) return;
+                const mid = c.dataset.cid, d = state.drafts[mid];
+                if (e.target.matches('.cp-editor') && e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sendReply(mid); return; }
+                const inp = e.target.closest('.cp-input'); if (!inp || !d) return;
+                const field = inp.dataset.field;
+                if (e.key === 'Enter' || e.key === ',' || e.key === ';') { e.preventDefault(); commitField(mid, field); }
+                else if (e.key === 'Backspace' && !inp.value && d[field].length) { d[field].pop(); renderChips(mid, field); }
+            });
+            read.addEventListener('focusout', e => {
+                const inp = e.target.closest && e.target.closest('.cp-input');
+                if (inp && inp.value.trim()) commitField(inp.closest('.gm-compose').dataset.cid, inp.dataset.field);
+            });
+            read.addEventListener('change', e => {
+                const c = e.target.closest('.gm-compose'); if (!c) return;
+                const mid = c.dataset.cid, d = state.drafts[mid]; if (!d) return;
+                if (e.target.matches('.cp-quote-cb')) d.quote = e.target.checked;
+                else if (e.target.matches('.cp-file-input')) { addFiles(mid, [...e.target.files], false); e.target.value = ''; }
+                else if (e.target.matches('.cp-image-input')) { addFiles(mid, [...e.target.files], true); e.target.value = ''; }
+            });
+            read.addEventListener('paste', e => {                    // pasted screenshots / images are uploaded and inserted inline
+                const ed = e.target.closest && e.target.closest('.cp-editor'); if (!ed) return;
+                const files = [...((e.clipboardData && e.clipboardData.files) || [])].filter(f => f.type.startsWith('image/'));
+                if (files.length) { e.preventDefault(); addFiles(ed.closest('.gm-compose').dataset.cid, files, true); }
+            });
+        }
+
+        // which record the sent mail is attached to: the mail's deal when it has one, otherwise the contact
+        function replyRecordContext(m) {
+            const deal = (m._dealIds || [])[0];
+            return deal ? { object_slug: DEAL_OBJECT_SLUG, record_id: deal, batch_recipients: {} }
+                : { object_slug: contactSlug, record_id: scopeId, batch_recipients: {} };
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // RENDER
+        // ═══════════════════════════════════════════════════════════════
+        function renderSub() {
+            if (!state.me) return;
+            const base = scopeSub();
+            if (!state.loaded) { $('sub').textContent = base; return; }
+            const n = visibleGroups().length;
+            $('sub').textContent = `${base} · ${n}${state.done ? '' : '+'} conversation${n === 1 && state.done ? '' : 's'}`;
+        }
+
+        function renderActive() {
+            const items = [];
+            const db = dateBounds();
+            if (state.filters.attach) items.push(['attach', 'Has attachment']);
+            if (db) items.push(['date', `Date: ${db.a === db.b ? fmtDay(db.a) : fmtDay(db.a) + ' – ' + fmtDay(db.b)}`]);
+            const cnt = $('filter-count');
+            cnt.textContent = items.length; cnt.hidden = !items.length;
+            const bar = $('activebar');
+            bar.hidden = !items.length;
+            bar.innerHTML = items.map(([k, l]) => `<span class="fchip">${esc(l)}<button type="button" data-clear="${k}" aria-label="Remove filter">×</button></span>`).join('') +
+                (items.length > 1 ? '<button class="flink" type="button" data-clear="all">Clear all</button>' : '');
+        }
+
+        function whoOf(g) {
+            const m = g.latest;
+            if (dirOf(m) === 'sent') {
+                const r = extractEmails(m.recipient_email);
+                return { label: 'To: ' + (r[0] || '(no recipient)') + (r.length > 1 ? ` +${r.length - 1}` : ''), init: r[0] || '?' };
+            }
+            const n = senderParts(m.from_email).name || '(unknown sender)';
+            return { label: n, init: n };
+        }
+
+        function renderList() {
+            const list = $('list');
+            if (!state.loaded && state.loading) { list.innerHTML = '<div class="loader"></div>'; return; }
+            if (state.error && !state.groups.length) { list.innerHTML = `<div class="empty err">Could not load mails.<br>${esc(state.error)}</div>`; return; }
+
+            const rows = visibleGroups(), tokens = searchTokens();
+            if (!rows.length) {
+                list.innerHTML = `<div class="empty">${filtersActive() ? 'No conversations match your search or filters.' : 'No mails found for this ' + SCOPE_LABEL + '.'}</div>` + moreHtml();
+                return;
+            }
+            let html = '', lastDay = '';
+            rows.forEach(g => {
+                const dk = dayKeyOf(g.time);
+                if (dk !== lastDay) { html += `<div class="day-head">${esc(dayLabel(g.time))}</div>`; lastDay = dk; }
+                const w = whoOf(g), d = dirOf(g.latest), replies = g.count - 1;
+                html += `<div class="row ${g.key === state.selected ? 'sel' : ''}" data-key="${esc(g.key)}">
+                    <div class="avatar">${esc(initial(w.init))}</div>
+                    <div class="row-main">
+                        <div class="row-top">
+                            <div class="row-who">${esc(w.label)}</div>
+                            <div class="row-meta">${g.atts ? clipSvg(13) : ''}<span class="row-date">${esc(fmtTime(g.time))}</span></div>
+                        </div>
+                        <div class="row-subj">${hl(g.latest.subject || '(no subject)', tokens)}</div>
+                        ${matchHint(g, tokens)}
+                        ${d || replies > 0 ? `<div class="row-tags">${d ? `<span class="dir-tag ${d}">${d === 'sent' ? 'Sent' : 'Received'}</span>` : ''}${replies > 0 ? `<span class="reply-badge">${replies} ${replies === 1 ? 'reply' : 'replies'}</span>` : ''}</div>` : ''}
+                        <div class="row-deal">${dealAreaHtml(g.dealIds, g.key, g.latest.id)}</div>
+                    </div>
+                </div>`;
+            });
+            list.innerHTML = html + moreHtml();
+        }
+
+        function moreHtml() {
+            if (state.error && state.groups.length) return `<div class="more"><div style="color:#b91c1c;font-size:12px;margin-bottom:8px">${esc(state.error)}</div><button class="btn" id="more-btn">Retry</button></div>`;
+            if (state.done) return '';
+            const note = (searchTokens().length || state.filters.attach) ? '<div class="more-note">Search and attachment filters apply to the conversations loaded so far.</div>' : '';
+            return `<div class="more">${note}<button class="btn" id="more-btn" ${state.loading ? 'disabled' : ''}>${state.loading ? 'Loading…' : 'Load more'}</button></div>`;
+        }
+
+        let _readKey = 'none';   // skip re-rendering the reading pane when nothing about it changed (keeps scroll position)
+
+        function renderRead() {
+            const g = state.groupMap.get(state.selected);
+            const t = g ? state.threads[state.selected] : null;
+            const key = g ? `${state.selected}|${t ? t.status : 'none'}|${state.showImages}|${state.showMiddle}|${t ? (t.ver || 0) : 0}|${state.dealVer}` : 'none';
+            if (key === _readKey) return;
+            _readKey = key;
+
+            if (!g) { $('read').innerHTML = '<div class="empty">Select a conversation to read it</div>'; return; }
+
+            if (!t || t.status === 'loading') {
+                $('read').innerHTML = `<div class="read-subj">${esc(g.latest.subject || '(no subject)')}</div><div class="loader small"></div>`;
+                return;
+            }
+            if (t.status === 'error') {
+                $('read').innerHTML = `<div class="read-subj">${esc(g.latest.subject || '(no subject)')}</div><div class="empty err">Could not load the conversation.<br>${esc(t.error)}<br><br><button class="btn" id="retry-thread">Retry</button></div>`;
+                return;
+            }
+            const mails = t.mails, n = mails.length;
+            const subject = (mails.find(m => m.subject) || {}).subject || g.latest.subject || '(no subject)';
+            const notice = !state.showImages && mails.some(m => pickBody(m).hasRemoteImg)
+                ? `<div class="notice" style="margin:0 0 14px"><span>Remote images are blocked to protect your privacy.</span><button id="show-img" type="button">Show images</button></div>` : '';
+            $('read').innerHTML = `<div class="read-subj">${esc(subject)}</div><div class="read-sub">${n} message${n === 1 ? '' : 's'}</div>${notice}<div class="thread">${threadHtml(mails)}</div>`;
+            state.expanded.forEach(mountMailBody);
+            mountComposers();
+        }
+
+        function render() {
+            renderSub();
+            renderActive();
+            renderList();
+            renderRead();
+            $('refresh-btn').classList.toggle('spinning', state.loading);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // FILTERS: attachment toggle, date pills + custom calendar (state keeps 'YYYY-MM-DD', the UI shows DD/MM/YYYY)
+        // ═══════════════════════════════════════════════════════════════
+        const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+        const cal = { y: 0, m: 0, target: 'from' };     // month being viewed (m is 0-11) + which pill is being picked
+        const pad = n => String(n).padStart(2, '0');
+        const dayKey = (y, m1, d) => y * 10000 + m1 * 100 + d;
+        const toDMY = iso => iso ? iso.split('-').reverse().join('/') : '';
+
+        function parseDMY(txt) {
+            const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(txt).trim());
+            if (!m) return null;
+            const d = +m[1], mo = +m[2], y = +m[3];
+            const chk = new Date(Date.UTC(y, mo - 1, d));
+            if (y < 1970 || chk.getUTCFullYear() !== y || chk.getUTCMonth() !== mo - 1 || chk.getUTCDate() !== d) return null;
+            return `${y}-${pad(mo)}-${pad(d)}`;
+        }
+        function istToday() {
+            const d = new Date(Date.now() + IST_MS);
+            return { y: d.getUTCFullYear(), m: d.getUTCMonth() + 1, d: d.getUTCDate() };
+        }
+
+        function syncFilterInputs() {
+            const on = state.filters.attach;
+            $('att-toggle').classList.toggle('on', on);
+            $('att-toggle').setAttribute('aria-pressed', String(on));
+            ['from', 'to'].forEach(k => {
+                const el = $('f-' + k);
+                if (document.activeElement !== el) el.value = toDMY(state.filters[k]);   // don't overwrite text being typed
+            });
+        }
+
+        let dateTimer;
+        function setDateFilter(target, iso) {
+            if (state.filters[target] === iso) return;
+            state.filters[target] = iso;
+            syncFilterInputs();
+            renderActive();
+            clearTimeout(dateTimer);
+            dateTimer = setTimeout(() => { if (state.scopeReady) reload(); }, 250);      // the date range is part of the query
+        }
+
+        function clearFilter(k) {
+            let dateChanged = false;
+            if (k === 'attach' || k === 'all') state.filters.attach = false;
+            if (k === 'date' || k === 'all') {
+                dateChanged = !!(state.filters.from || state.filters.to);
+                state.filters.from = ''; state.filters.to = '';
+            }
+            syncFilterInputs();
+            if (dateChanged) reload(); else render();
+        }
+
+        function renderCalendar() {
+            const t = istToday(), todayK = dayKey(t.y, t.m, t.d);
+            const iso = state.filters[cal.target], selK = iso ? +iso.replace(/-/g, '') : null;
+            const firstDow = new Date(Date.UTC(cal.y, cal.m, 1)).getUTCDay();
+            const dim = new Date(Date.UTC(cal.y, cal.m + 1, 0)).getUTCDate();
+            let cells = DOW.map(d => `<div class="cal-dow">${d}</div>`).join('');
+            for (let i = 0; i < firstDow; i++) cells += '<div></div>';
+            for (let d = 1; d <= dim; d++) {
+                const k = dayKey(cal.y, cal.m + 1, d);
+                const cls = ['cal-day', k === todayK ? 'today' : '', k === selK ? 'sel' : ''].filter(Boolean).join(' ');
+                cells += `<button type="button" class="${cls}" data-d="${d}">${d}</button>`;
+            }
+            const chev = dir => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="${dir < 0 ? 'M15 6l-6 6 6 6' : 'M9 6l6 6-6 6'}"/></svg>`;
+            $('cal-view').innerHTML = `
+                <div class="cal-title">${cal.target === 'from' ? 'Start date' : 'End date'}</div>
+                <div class="cal-head">
+                    <button type="button" class="cal-nav" data-nav="-1" aria-label="Previous month">${chev(-1)}</button>
+                    <div class="cal-month">${MONTHS[cal.m]} ${cal.y}</div>
+                    <button type="button" class="cal-nav" data-nav="1" aria-label="Next month">${chev(1)}</button>
+                </div>
+                <div class="cal-grid">${cells}</div>
+                <div class="cal-foot">
+                    <button type="button" class="cal-link" data-today="1">Today</button>
+                    <span>
+                        <button type="button" class="cal-link muted" data-cclear="1">Clear</button>
+                        <button type="button" class="cal-link muted" data-back="1">Back</button>
+                    </span>
+                </div>`;
+        }
+        function openCal(target) {
+            cal.target = target;
+            const t = istToday();
+            const iso = state.filters[target] || state.filters[target === 'from' ? 'to' : 'from'];
+            if (iso) { const [y, m] = iso.split('-').map(Number); cal.y = y; cal.m = m - 1; }
+            else { cal.y = t.y; cal.m = t.m - 1; }
+            renderCalendar();
+            $('pop-main').hidden = true;
+            $('cal-view').hidden = false;
+        }
+        function closeCal() {
+            $('cal-view').hidden = true;
+            $('pop-main').hidden = false;
+        }
+        // closes the whole More filters popover (outside clicks, including clicks inside a mail body iframe)
+        function closeFilters() {
+            closeCal();
+            $('filter-pop').hidden = true;
+            const mb = $('more-filters-btn');
+            mb.classList.remove('open');
+            mb.setAttribute('aria-expanded', 'false');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // EVENTS
+        // ═══════════════════════════════════════════════════════════════
+        async function refreshAll() {
+            if (!state.me) return;
+            if (!state.scopeReady) {
+                try { await prepareScope(); state.scopeReady = true; }
+                catch (e) { console.error(e); $('list').innerHTML = `<div class="empty err">${esc(e.message)}</div>`; return; }
+            }
+            return reload();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            $('search').addEventListener('input', e => { state.filters.search = e.target.value; renderSub(); renderList(); });
+            $('list').addEventListener('click', e => {
+                if (e.target.closest('#more-btn')) { loadMore(); return; }
+                const cb = e.target.closest('[data-convert]'); if (cb) { e.stopPropagation(); convertToDeal(cb.dataset.convert, cb.dataset.email); return; }
+                if (e.target.closest('a.deal-chip')) return;                 // open the deal, don't select the row
+                const row = e.target.closest('.row'); if (!row) return;
+                selectThread(row.dataset.key);
+            });
+            $('read').addEventListener('click', e => {
+                if (handleComposerClick(e)) return;
+                const cb = e.target.closest('[data-convert]'); if (cb) { convertToDeal(cb.dataset.convert, cb.dataset.email); return; }
+                if (e.target.closest('a.deal-chip')) return;
+                if (e.target.closest('#show-img')) { state.showImages = true; renderRead(); return; }
+                if (e.target.closest('#retry-thread') && state.selected) { ensureThread(state.selected); return; }
+                if (e.target.closest('#gm-expander')) { state.showMiddle = true; renderRead(); return; }
+                const col = e.target.closest('.gm-collapse');
+                if (col) { e.stopPropagation(); toggleItem(col.closest('.gm-item').dataset.mid, false); return; }
+                const item = e.target.closest('.gm-item.collapsed');
+                if (item) toggleItem(item.dataset.mid, true);
+            });
+            $('refresh-btn').addEventListener('click', refreshAll);
+            wireComposer();
+
+            // ── More filters popover ──
+            const pop = $('filter-pop'), mb = $('more-filters-btn');
+            mb.addEventListener('click', e => {
+                e.stopPropagation();
+                if (pop.hidden) { pop.hidden = false; mb.classList.add('open'); mb.setAttribute('aria-expanded', 'true'); }
+                else closeFilters();
+            });
+            document.addEventListener('click', e => { if (!e.target.closest('.filter-wrap')) closeFilters(); });
+            window.addEventListener('blur', closeFilters);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!$('cal-view').hidden) closeCal(); else closeFilters(); } });
+
+            $('att-toggle').addEventListener('click', () => {
+                state.filters.attach = !state.filters.attach;     // click again to remove it
+                syncFilterInputs();
+                render();
+            });
+
+            // date pills: type DD/MM/YYYY (slashes are added for you) or pick from the calendar icon
+            ['from', 'to'].forEach(k => {
+                const inp = $('f-' + k);
+                inp.addEventListener('input', () => {
+                    let v = inp.value.replace(/[^\d]/g, '').slice(0, 8);
+                    if (v.length > 4) v = v.slice(0, 2) + '/' + v.slice(2, 4) + '/' + v.slice(4);
+                    else if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2);
+                    inp.value = v;
+                    if (v === '') { setDateFilter(k, ''); return; }
+                    const iso = parseDMY(v);
+                    if (iso) setDateFilter(k, iso);
+                });
+                inp.addEventListener('blur', () => { inp.value = toDMY(state.filters[k]); });   // drop half-typed text
+            });
+            $('pop-main').addEventListener('click', e => {
+                const b = e.target.closest('[data-cal]'); if (b) openCal(b.dataset.cal);
+            });
+            $('cal-view').addEventListener('click', e => {
+                e.stopPropagation();                       // the calendar re-renders itself, so don't let the outside-click handler see it
+                const day = e.target.closest('[data-d]'), nav = e.target.closest('[data-nav]');
+                if (day) { setDateFilter(cal.target, `${cal.y}-${pad(cal.m + 1)}-${pad(+day.dataset.d)}`); closeCal(); return; }
+                if (nav) {
+                    cal.m += +nav.dataset.nav;
+                    if (cal.m < 0) { cal.m = 11; cal.y--; } else if (cal.m > 11) { cal.m = 0; cal.y++; }
+                    renderCalendar(); return;
+                }
+                if (e.target.closest('[data-today]')) { const t = istToday(); setDateFilter(cal.target, `${t.y}-${pad(t.m)}-${pad(t.d)}`); closeCal(); return; }
+                if (e.target.closest('[data-cclear]')) { setDateFilter(cal.target, ''); closeCal(); return; }
+                if (e.target.closest('[data-back]')) closeCal();
+            });
+            $('f-clear').addEventListener('click', () => clearFilter('all'));
+            $('activebar').addEventListener('click', e => {
+                const b = e.target.closest('[data-clear]'); if (b) clearFilter(b.dataset.clear);
+            });
+
+            if (!token || !scopeId) {
+                $('sub').textContent = '';
+                $('list').innerHTML = `<div class="empty err">${!token ? 'Missing auth token in the URL (?token=…).' : 'Missing contact id in the URL (?id=…).'}</div>`;
+                return;
+            }
+
+            try {
+                state.me = await loadMe();
+            } catch (e) {
+                $('sub').textContent = '';
+                $('list').innerHTML = `<div class="empty err">${esc(e.message)}</div>`;
+                return;
+            }
+
+            try {
+                await prepareScope();
+                state.scopeReady = true;
+            } catch (e) {
+                console.error(e);
+                $('sub').textContent = '';
+                $('list').innerHTML = `<div class="empty err">${esc(e.message)}</div>`;
+                return;
+            }
+
+            renderSub();
+            await reload();
+        });
+
+    </script>
+</body>
+
+</html>

@@ -38,19 +38,19 @@
         }
 
         .wrap {
-            padding: 24px;
+            padding: 16px;
             display: flex;
             justify-content: center;
         }
 
         .modal {
             width: 100%;
-            max-width: 700px;
+            max-width: 640px;
             background: #fff;
             border: 1px solid #e5e7eb;
             border-radius: 14px;
             box-shadow: 0 8px 28px rgba(16, 24, 40, .10);
-            padding: 30px 32px 28px;
+            padding: 24px 28px 22px;
         }
 
         /* ── header ── */
@@ -59,11 +59,11 @@
             justify-content: space-between;
             align-items: flex-start;
             gap: 16px;
-            margin-bottom: 26px;
+            margin-bottom: 18px;
         }
 
         .title {
-            font-size: 21px;
+            font-size: 19px;
             font-weight: 600;
             letter-spacing: -0.01em;
             color: #374151;
@@ -81,24 +81,24 @@
 
         /* ── fields ── */
         .field {
-            margin-bottom: 22px;
+            margin-bottom: 16px;
         }
 
         .label {
             display: block;
-            font-size: 14px;
+            font-size: 13px;
             color: #6b7280;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .input {
             width: 100%;
-            height: 46px;
-            padding: 0 14px;
+            height: 42px;
+            padding: 0 12px;
             border: 1px solid #e5e7eb;
             border-radius: 6px;
             background: #fff;
-            font-size: 15px;
+            font-size: 14px;
             color: #111827;
             outline: none;
             transition: border-color .15s, box-shadow .15s;
@@ -128,8 +128,8 @@
             flex-wrap: wrap;
             align-items: center;
             gap: 6px;
-            min-height: 46px;
-            padding: 6px 40px 6px 10px;
+            min-height: 42px;
+            padding: 4px 36px 4px 8px;
             border: 1px solid #e5e7eb;
             border-radius: 6px;
             background: #fff;
@@ -145,7 +145,7 @@
         }
 
         .att-ph {
-            font-size: 15px;
+            font-size: 14px;
             color: #9ca3af;
             padding-left: 4px;
         }
@@ -156,8 +156,8 @@
 
         .att-chev {
             position: absolute;
-            right: 14px;
-            top: 14px;
+            right: 12px;
+            top: 12px;
             color: #374151;
             pointer-events: none;
             transition: transform .15s;
@@ -175,7 +175,7 @@
             background: #eef4f5;
             color: #0f3d42;
             border-radius: 999px;
-            padding: 4px 6px 4px 12px;
+            padding: 3px 5px 3px 11px;
             font-size: 13px;
         }
 
@@ -219,7 +219,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 10px 14px;
+            padding: 8px 12px;
             border-bottom: 1px solid #eef0f2;
             color: #9ca3af;
         }
@@ -239,7 +239,7 @@
         }
 
         .att-list {
-            max-height: 264px;
+            max-height: 240px;
             overflow-y: auto;
             padding: 4px;
         }
@@ -249,7 +249,7 @@
             align-items: center;
             justify-content: space-between;
             gap: 10px;
-            padding: 8px 10px;
+            padding: 7px 10px;
             border-radius: 8px;
             cursor: pointer;
         }
@@ -295,7 +295,7 @@
         }
 
         .att-msg {
-            padding: 18px 12px;
+            padding: 16px 12px;
             text-align: center;
             font-size: 13px;
             color: #6b7280;
@@ -309,24 +309,127 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 8px 14px;
+            padding: 6px 12px;
             border-top: 1px solid #eef0f2;
             font-size: 13px;
             color: #6b7280;
+        }
+
+        /* ── single-select dropdowns (meeting type, agenda) ──
+           The icon is optional: with no icon only the option text is shown. */
+        .sel {
+            position: relative;
+        }
+
+        .sel-field {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            height: 42px;
+            padding: 0 36px 0 12px;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            background: #fff;
+            font-size: 14px;
+            color: #111827;
+            cursor: pointer;
+            outline: none;
+            transition: border-color .15s, box-shadow .15s;
+        }
+
+        .sel-field:focus,
+        .sel.open .sel-field {
+            border-color: #374151;
+            box-shadow: 0 0 0 3px rgba(55, 65, 81, .10);
+        }
+
+        .sel-val {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #111827;
+        }
+
+        .sel-val.ph {
+            color: #9ca3af;
+        }
+
+        .sel-ico {
+            display: inline-flex;
+            color: #175259;
+            flex-shrink: 0;
+        }
+
+        .sel-chev {
+            position: absolute;
+            right: 12px;
+            top: 12px;
+            color: #374151;
+            pointer-events: none;
+            transition: transform .15s;
+        }
+
+        .sel.open .sel-chev {
+            transform: rotate(180deg);
+        }
+
+        .sel-pop {
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: calc(100% + 6px);
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            box-shadow: 0 12px 32px rgba(16, 24, 40, .16);
+            z-index: 60;
+            padding: 4px;
+        }
+
+        .sel-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #111827;
+        }
+
+        .sel-name {
+            flex: 1;
+            min-width: 0;
+            color: #111827;
+        }
+
+        .sel-item:hover {
+            background: #f3f6f7;
+        }
+
+        .sel-item.on {
+            background: #eef4f5;
+        }
+
+        .sel-item.on .att-tick {
+            visibility: visible;
         }
 
         /* ── when cards ── */
         .when {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 14px;
+            gap: 12px;
         }
 
         .when-card {
             border: 1px solid #e5e7eb;
             border-radius: 6px;
             background: #fff;
-            padding: 16px 12px;
+            padding: 12px 10px;
             text-align: center;
             cursor: pointer;
             transition: border-color .15s;
@@ -338,51 +441,57 @@
 
         .when-card.active {
             border: 1.5px solid #111827;
-            padding: 15.5px 11.5px;
+            padding: 11.5px 9.5px;
         }
 
         .when-card .t {
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             color: #111827;
         }
 
         .when-card .s {
-            font-size: 15px;
+            font-size: 13px;
             color: #6b7280;
-            margin-top: 4px;
+            margin-top: 3px;
         }
 
-        /* ── date + start/end time ── */
+        /* ── date (own row) + start/end time (side by side) ── */
         .date-box {
             position: relative;
         }
 
         .date-box .input {
-            padding-right: 44px;
+            padding-right: 40px;
         }
 
-        .time-pair {
+        .sched-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 16px;
+            gap: 12px 14px;
+        }
+
+        .sched-row>div:first-child {
+            grid-column: 1 / -1;
+            /* Date spans the full width */
         }
 
         .tgroup {
             display: grid;
-            grid-template-columns: 1fr 112px;
-            gap: 10px;
+            grid-template-columns: 1fr 100px;
+            gap: 8px;
         }
 
         @media (max-width: 560px) {
-            .time-pair {
+            .sched-row {
                 grid-template-columns: 1fr;
+                /* stack everything on narrow screens */
             }
         }
 
         .cal-btn {
             position: absolute;
-            right: 8px;
+            right: 6px;
             top: 50%;
             transform: translateY(-50%);
             background: none;
@@ -404,12 +513,12 @@
         .cal-pop {
             position: absolute;
             left: 0;
-            width: 304px;
+            width: 296px;
             background: #fff;
             border: 1px solid #e5e7eb;
             border-radius: 12px;
             box-shadow: 0 12px 32px rgba(16, 24, 40, .16);
-            padding: 14px;
+            padding: 12px;
             z-index: 50;
             bottom: calc(100% + 6px);
         }
@@ -423,7 +532,7 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .cal-month {
@@ -465,11 +574,11 @@
             font-weight: 500;
             color: #9ca3af;
             text-align: center;
-            padding: 6px 0;
+            padding: 5px 0;
         }
 
         .cal-day {
-            height: 38px;
+            height: 36px;
             border: 1px solid transparent;
             background: none;
             border-radius: 8px;
@@ -502,8 +611,8 @@
         }
 
         .cal-foot {
-            margin-top: 10px;
-            padding-top: 10px;
+            margin-top: 8px;
+            padding-top: 8px;
             border-top: 1px solid #f0f1f3;
             display: flex;
             justify-content: space-between;
@@ -536,7 +645,7 @@
         .select-box select {
             appearance: none;
             -webkit-appearance: none;
-            padding-right: 40px;
+            padding: 0 36px 0 12px;
             cursor: pointer;
         }
 
@@ -546,7 +655,7 @@
 
         .select-box svg {
             position: absolute;
-            right: 14px;
+            right: 12px;
             top: 50%;
             transform: translateY(-50%);
             pointer-events: none;
@@ -556,7 +665,7 @@
         .ampm {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            height: 46px;
+            height: 42px;
             border: 1px solid #e5e7eb;
             border-radius: 6px;
             overflow: hidden;
@@ -566,7 +675,7 @@
             border: none;
             background: #fff;
             color: #6b7280;
-            font-size: 15px;
+            font-size: 14px;
             cursor: pointer;
         }
 
@@ -579,8 +688,8 @@
         /* ── footer ── */
         .foot {
             border-top: 1px solid #e5e7eb;
-            margin-top: 28px;
-            padding-top: 22px;
+            margin-top: 4px;
+            padding-top: 16px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -609,13 +718,13 @@
         }
 
         .btn {
-            height: 42px;
-            padding: 0 30px;
+            height: 40px;
+            padding: 0 26px;
             border: none;
             border-radius: 6px;
             background: #175259;
             color: #fff;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
             white-space: nowrap;
@@ -641,135 +750,6 @@
             border-radius: 50%;
             animation: spin .7s linear infinite;
         }
-
-        /* Date on its own row, Start + End side by side below it */
-        .sched-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px 16px;
-        }
-
-        .sched-row>div:first-child {
-            grid-column: 1 / -1;
-            /* Date spans the full width */
-        }
-
-        /* back to the roomier time controls, as in your screenshot */
-        .tgroup {
-            grid-template-columns: 1fr 112px;
-            gap: 10px;
-        }
-
-        .select-box select {
-            padding: 0 40px 0 14px;
-        }
-
-        .select-box svg {
-            right: 14px;
-        }
-
-        .ampm button {
-            font-size: 15px;
-        }
-
-        /* ── meeting type dropdown ── */
-        .mt {
-            position: relative;
-        }
-
-        .mt-field {
-            position: relative;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            height: 46px;
-            padding: 0 40px 0 14px;
-            border: 1px solid #e5e7eb;
-            border-radius: 6px;
-            background: #fff;
-            font-size: 15px;
-            color: #111827;
-            cursor: pointer;
-            outline: none;
-            transition: border-color .15s, box-shadow .15s;
-        }
-
-        .mt-field:focus,
-        .mt.open .mt-field {
-            border-color: #374151;
-            box-shadow: 0 0 0 3px rgba(55, 65, 81, .10);
-        }
-
-        .mt-ico {
-            display: inline-flex;
-            color: #175259;
-            flex-shrink: 0;
-        }
-
-        .mt-chev {
-            position: absolute;
-            right: 14px;
-            top: 14px;
-            color: #374151;
-            pointer-events: none;
-            transition: transform .15s;
-        }
-
-        .mt.open .mt-chev {
-            transform: rotate(180deg);
-        }
-
-        .mt-pop {
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: calc(100% + 6px);
-            background: #fff;
-            border: 1px solid #e5e7eb;
-            border-radius: 12px;
-            box-shadow: 0 12px 32px rgba(16, 24, 40, .16);
-            z-index: 60;
-            padding: 4px;
-        }
-
-        .mt-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            color: #111827;
-        }
-
-        .mt-item .mt-name {
-            flex: 1;
-        }
-
-        .mt-item:hover {
-            background: #f3f6f7;
-        }
-
-        .mt-item.on {
-            background: #eef4f5;
-        }
-
-        .mt-item.on .att-tick {
-            visibility: visible;
-        }
-
-        .mt-ico {
-            display: none;
-        }
-
-        @media (max-width: 560px) {
-            .sched-row {
-                grid-template-columns: 1fr;
-                /* stack everything on narrow screens */
-            }
-        }
-
 
         @keyframes spin {
             to {
@@ -830,21 +810,16 @@
                 </div>
             </div>
 
-            <!-- Meeting type -->
+            <!-- Meeting type (built by createSelect) -->
             <div class="field">
                 <span class="label" id="mt-label">Meeting type</span>
-                <div class="mt" id="mt">
-                    <div class="mt-field" id="mt-field" tabindex="0" role="combobox" aria-haspopup="listbox"
-                        aria-expanded="false" aria-labelledby="mt-label">
-                        <!-- <span class="mt-ico" id="mt-ico"></span> -->
-                        <span id="mt-val">Brief Discussion</span>
-                        <svg class="mt-chev" width="18" height="18" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M6 9l6 6 6-6" />
-                        </svg>
-                    </div>
-                    <div class="mt-pop" id="mt-pop" role="listbox" hidden></div>
-                </div>
+                <div id="mt"></div>
+            </div>
+
+            <!-- Agenda (built by createSelect) -->
+            <div class="field">
+                <span class="label" id="ag-label">Agenda</span>
+                <div id="ag"></div>
             </div>
 
             <div class="field">
@@ -969,7 +944,8 @@
         // ═══════════════════════════════════════════════════════════════
         const state = {
             mode: 'later',     // 'now' | 'later'
-            meetingType: 'Brief Discussion',
+            meetingType: 'Online',
+            agenda: '',             // required — '' = not chosen yet. Set e.g. 'Brief Discussion' to preselect one.
             startAmpm: 'PM',
             endAmpm: 'PM',
             endTouched: false,      // once the user edits the end time, stop auto-suggesting it
@@ -1131,8 +1107,6 @@
             return email ? { name: String(r.contact_name || '').trim(), email } : null;
         }
 
-
-
         // contacts matching a name/email search (empty term = first page). Contacts without a usable email are skipped.
         async function fetchContacts(term, limit) {
             const t = String(term || '').trim().replace(/'/g, "''");
@@ -1274,7 +1248,7 @@
         }
 
         function openAtt() {
-            closeMt();
+            closeSelects();
             closeCalendar();
             $('att-pop').hidden = false;
             $('att').classList.add('open');
@@ -1389,7 +1363,7 @@
         }
 
         function openCalendar() {
-            closeMt();
+            closeSelects();
             closeAtt();
             const t = istTodayParts();
             const dp = parseDate($('date-text').value);
@@ -1437,91 +1411,113 @@
             $('date-text').addEventListener('input', () => { if (!$('cal-pop').hidden) renderCalendar(); });
         }
 
-
-
         // ═══════════════════════════════════════════════════════════════
-        // MEETING TYPE — Online / Face to face
+        // SINGLE-SELECT DROPDOWNS — Meeting type + Agenda
+        // Each option is { label, icon? }. The KEY is what gets sent to the webhook.
+        // The icon is optional: if an option has no icon (missing, empty, not a string),
+        // only its text is shown — in the field and in the list.
         // ═══════════════════════════════════════════════════════════════
-        // const MEETING_TYPES = {
-        //     "Online": {
-        //         label: 'Online',
-        //         icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>'
-        //     },
-        //     "Face-To-Face": {
-        //         label: 'Face to face',
-        //         icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
-        //     },
-        // };
         const MEETING_TYPES = {
-            "Brief Discussion": { label: 'Brief Discussion' },
-            "Internal Planning": { label: 'Internal Planning' },
-            "Plan Presentation": { label: 'Plan Presentation' },
-            "Others": { label: 'Others' },
+            "Online": {
+                label: 'Online',
+                icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 13 5.223 3.482a.5.5 0 0 0 .777-.416V7.87a.5.5 0 0 0-.752-.432L16 10.5"/><rect x="2" y="6" width="14" height="12" rx="2"/></svg>'
+            },
+            "Face-To-Face": {
+                label: 'Face to face',
+                icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>'
+            },
         };
-        const mtIsOpen = () => !$('mt-pop').hidden;
 
-        // function renderMeetingType() {
-        //     const t = MEETING_TYPES[state.meetingType];
-        //     $('mt-ico').innerHTML = t.icon;
-        //     $('mt-val').textContent = t.label;
-        //     $('mt-pop').innerHTML = Object.entries(MEETING_TYPES).map(([k, v]) => {
-        //         const on = k === state.meetingType;
-        //         return `<div class="mt-item${on ? ' on' : ''}" role="option" aria-selected="${on}" data-v="${k}">
-        //     <span class="mt-ico">${v.icon}</span><span class="mt-name">${v.label}</span>${TICK}</div>`;
-        //     }).join('');
-        // }
+        const AGENDA_OPTIONS = {
+            "Brief Discussion": {
+                label: 'Brief Discussion',
+                icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>'
+            },
+            "Internal Planning": {
+                label: 'Internal Planning',
+                icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></svg>'
+            },
+            "Plan Presentation": {
+                label: 'Plan Presentation',
+                icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h20"/><path d="M21 3v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V3"/><path d="m7 21 5-5 5 5"/></svg>'
+            },
+            "Others": {
+                label: 'Others',
+                icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>'
+            },
+        };
 
-        function renderMeetingType() {
-            $('mt-val').textContent = MEETING_TYPES[state.meetingType].label;
-            $('mt-pop').innerHTML = Object.entries(MEETING_TYPES).map(([k, v]) => {
-                const on = k === state.meetingType;
-                return `<div class="mt-item${on ? ' on' : ''}" role="option" aria-selected="${on}" data-v="${k}">
-            <span class="mt-name">${v.label}</span>${TICK}</div>`;
-            }).join('');
-        }
+        const selectClosers = [];
+        function closeSelects() { selectClosers.forEach(fn => fn()); }
 
-        function openMt() {
-            closeCalendar(); closeAtt();
-            $('mt-pop').hidden = false;
-            $('mt').classList.add('open');
-            $('mt-field').setAttribute('aria-expanded', 'true');
-        }
-        function closeMt() {
-            if (!mtIsOpen()) return;
-            $('mt-pop').hidden = true;
-            $('mt').classList.remove('open');
-            $('mt-field').setAttribute('aria-expanded', 'false');
-        }
-        function selectMt(v) {
-            if (!MEETING_TYPES[v]) return;
-            state.meetingType = v;
-            renderMeetingType();
-            closeMt();
-            validate();
-        }
+        function createSelect({ rootId, labelId, stateKey, options, placeholder }) {
+            const root = $(rootId);
+            root.classList.add('sel');
+            root.innerHTML = `
+                <div class="sel-field" tabindex="0" role="combobox" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="${labelId}">
+                    <span class="sel-ico" hidden></span>
+                    <span class="sel-val"></span>
+                    <svg class="sel-chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="sel-pop" role="listbox" hidden></div>`;
+            const field = root.querySelector('.sel-field'), pop = root.querySelector('.sel-pop');
+            const icoEl = root.querySelector('.sel-ico'), valEl = root.querySelector('.sel-val');
+            const keys = Object.keys(options);
+            const iconOf = k => { const i = options[k] && options[k].icon; return typeof i === 'string' ? i.trim() : ''; };
+            const labelOf = k => String((options[k] && options[k].label) || k);
+            const isOpen = () => !pop.hidden;
 
-        function initMeetingType() {
-            const field = $('mt-field');
-            field.addEventListener('click', () => { mtIsOpen() ? closeMt() : openMt(); });
+            function render() {
+                const cur = state[stateKey], has = Object.prototype.hasOwnProperty.call(options, cur);
+                const ico = has ? iconOf(cur) : '';
+                icoEl.innerHTML = ico; icoEl.hidden = !ico;                  // no icon → nothing but the text
+                valEl.textContent = has ? labelOf(cur) : placeholder;
+                valEl.classList.toggle('ph', !has);
+                pop.innerHTML = keys.map(k => {
+                    const on = k === cur, ic = iconOf(k);
+                    return `<div class="sel-item${on ? ' on' : ''}" role="option" aria-selected="${on}" data-v="${esc(k)}">` +
+                        (ic ? `<span class="sel-ico">${ic}</span>` : '') +
+                        `<span class="sel-name">${esc(labelOf(k))}</span>${TICK}</div>`;
+                }).join('');
+            }
+            function open() {
+                closeCalendar(); closeAtt(); closeSelects();
+                pop.hidden = false; root.classList.add('open'); field.setAttribute('aria-expanded', 'true');
+            }
+            function close() {
+                if (!isOpen()) return;
+                pop.hidden = true; root.classList.remove('open'); field.setAttribute('aria-expanded', 'false');
+            }
+            function choose(k) {
+                if (!Object.prototype.hasOwnProperty.call(options, k)) return;
+                state[stateKey] = k; render(); close(); validate();
+            }
+
+            field.addEventListener('click', () => { isOpen() ? close() : open(); });
             field.addEventListener('keydown', e => {
-                const keys = Object.keys(MEETING_TYPES);
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); mtIsOpen() ? closeMt() : openMt(); }
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); isOpen() ? close() : open(); }
                 else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     e.preventDefault();
-                    const i = keys.indexOf(state.meetingType);
-                    selectMt(keys[(i + (e.key === 'ArrowDown' ? 1 : -1) + keys.length) % keys.length]);
-                    openMt();
+                    const down = e.key === 'ArrowDown', i = keys.indexOf(state[stateKey]);
+                    const next = i < 0 ? (down ? 0 : keys.length - 1) : (i + (down ? 1 : -1) + keys.length) % keys.length;
+                    state[stateKey] = keys[next]; render(); validate();
                 }
-                else if (e.key === 'Escape') { e.stopPropagation(); closeMt(); }
+                else if (e.key === 'Escape' && isOpen()) { e.stopPropagation(); close(); }
             });
-            $('mt-pop').addEventListener('click', e => {
-                const it = e.target.closest('.mt-item');
-                if (it) selectMt(it.dataset.v);
+            pop.addEventListener('click', e => {
+                const it = e.target.closest('.sel-item');
+                if (it) choose(it.dataset.v);
             });
-            document.addEventListener('click', e => { if (!$('mt').contains(e.target)) closeMt(); });
-            renderMeetingType();
+            document.addEventListener('click', e => { if (!root.contains(e.target)) close(); });
+
+            selectClosers.push(close);
+            render();
         }
 
+        function initSelects() {
+            createSelect({ rootId: 'mt', labelId: 'mt-label', stateKey: 'meetingType', options: MEETING_TYPES, placeholder: 'Select meeting type' });
+            createSelect({ rootId: 'ag', labelId: 'ag-label', stateKey: 'agenda', options: AGENDA_OPTIONS, placeholder: 'Select agenda' });
+        }
 
         // ═══════════════════════════════════════════════════════════════
         // VALIDATION / TIME RESOLUTION
@@ -1555,8 +1551,9 @@
         function validate() {
             const titleOk = $('meet-title').value.trim().length > 0;
             const emailOk = selected.size > 0;
+            const agendaOk = !!state.agenda;
             const range = resolveRange();
-            const ready = titleOk && emailOk && !range.error && !!state.me && !!dealId && !state.submitting;
+            const ready = titleOk && emailOk && agendaOk && !range.error && !!state.me && !!dealId && !state.submitting;
             $('book-btn').disabled = !ready;
             if (!state.submitting && range.error === 'past') setMsg('Pick a date and time in the future (IST).', 'err');
             else if (!state.submitting && range.error === 'order') setMsg('End time must be after the start time.', 'err');
@@ -1602,6 +1599,7 @@
                 idempotency_key: `${IDEMPOTENCY_PREFIX}-${state.me.email}-${startStr}`,
                 token: token,
                 meeting_type: state.meetingType,
+                agenda: state.agenda,
             };
 
             state.submitting = true;
@@ -1678,7 +1676,7 @@
             });
             initCalendar();
             initAttendees();
-            initMeetingType();
+            initSelects();
 
             // start / end time
             $('start-select').addEventListener('change', e => {
@@ -1710,6 +1708,8 @@
             }
 
             // warm the dropdown: first 10 contacts, so it opens instantly
+            fetchContacts('', CONTACT_INITIAL_LIMIT).then(r => { att.initial = r; }).catch(e => console.error('Contacts preload failed', e));
+
             // current user + deal campaign name + deal's contact, in parallel
             const [meRes, campRes, contactRes] = await Promise.allSettled([loadMe(), loadCampaignName(), loadDealContact()]);
             if (meRes.status === 'fulfilled') state.me = meRes.value;

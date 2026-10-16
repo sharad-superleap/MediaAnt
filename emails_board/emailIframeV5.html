@@ -1762,15 +1762,18 @@
             attachments: 'attachments', // list of file URLs
             created: 'created_at',      // record creation time: the date of mails that have neither received_at nor sent_at (e.g. sent from the platform)
             deals: 'email_deals',       // the deal a mail is linked to: this page only lists mails linked to the deal in the URL
+            contacts: 'email_contacts',
         };
 
         // Scope: mails linked to THIS deal (email_deals = the id in the URL) that also have the deal's email address in From / To / Cc / Bcc
         const DEAL_OBJECT_SLUG = 'deals';
         const DEAL_CONTACT_FIELD = 'associated_contact';           // field on the deal that points to its contact
-        const DEAL_EMAIL_FIELDS = ['email'];                       // field(s) on the deal that hold its email address: looked for in From / To / Cc / Bcc
+        // const DEAL_EMAIL_FIELDS = ['email'];                       // field(s) on the deal that hold its email address: looked for in From / To / Cc / Bcc
         const CONTACT_NAME_FIELD = 'name';                         // field of the associated contact shown on the link (read through the deal, in the same query)
+        const CONTACT_EMAIL_FIELD = 'email';
         const CONTACT_URL = id => `https://app.superleap.com/contacts/records/${encodeURIComponent(id)}`;
-        const THREAD_ONLY_THIS_DEAL = false;                       // true = an opened conversation shows only the mails linked to this deal
+        // const THREAD_ONLY_THIS_DEAL = false;                       // true = an opened conversation shows only the mails linked to this deal
+        const THREAD_ONLY_THIS_CONTACT = false;
         const SCOPE_TO_CURRENT_USER = false;                       // true = also require the logged-in user to be in the mail
         const SCOPE_LABEL = 'deal';
 
@@ -1889,35 +1892,42 @@
         // ═══════════════════════════════════════════════════════════════
         // SCOPE  (which mails belong on this page)
         // ═══════════════════════════════════════════════════════════════
-        let scopeAddrs = [];          // the deal's email address(es), looked for in From / To / Cc / Bcc
+        let scopeContactId = '';      // the deal's associated_contact: the id looked for in the emails' email_contacts field
 
-        // ONE query reads everything the page needs from the deal: its contact (id, and name through the relationship, for the link) and its email address(es)
+        // ONE query reads what the page needs from the deal: its contact id and, through the relationship, the contact's name (link text) and email (To of a reply)
         async function prepareScope() {
-            const emailCols = DEAL_EMAIL_FIELDS.map((f, i) => `${f} as addr_${i}`).join(', ');
-            const head = `SELECT id, ${DEAL_CONTACT_FIELD} as contact_id, ${emailCols}`;
+            const C = DEAL_CONTACT_FIELD;
+            const base = `SELECT id, ${C} as contact_id`;
             const tail = `FROM ${DEAL_OBJECT_SLUG} WHERE id = ${sqlStr(scopeId)} LIMIT 1 OFFSET 0`;
-            let rows;
-            try {
-                rows = await query(`${head}, ${DEAL_CONTACT_FIELD}.${CONTACT_NAME_FIELD} as contact_name ${tail}`, DEAL_OBJECT_SLUG, 1);
-            } catch (e) {
-                // the contact's name could not be read through the deal: ask again without it (the link then just says "Contact")
-                console.warn('[deal] contact name not readable through the deal:', e.message);
-                rows = await query(`${head} ${tail}`, DEAL_OBJECT_SLUG);
+            // if a related column cannot be read, step down to fewer columns instead of failing the page
+            const tries = [
+                `${base}, ${C}.${CONTACT_NAME_FIELD} as contact_name, ${C}.${CONTACT_EMAIL_FIELD} as contact_email ${tail}`,
+                `${base}, ${C}.${CONTACT_EMAIL_FIELD} as contact_email ${tail}`,
+                `${base} ${tail}`,
+            ];
+            let rows = null;
+            for (let i = 0; i < tries.length; i++) {
+                try { rows = await query(tries[i], DEAL_OBJECT_SLUG, i === tries.length - 1 ? 3 : 1); break; }
+                catch (e) { if (i === tries.length - 1) throw e; console.warn('[deal] contact columns not readable through the deal, trying fewer:', e.message); }
             }
             if (!rows.length) throw new Error('Deal not found');
             const row = rows[0];
-            scopeAddrs = [...new Set(DEAL_EMAIL_FIELDS.flatMap((f, i) => asList(row['addr_' + i])))];
-            const contactId = idList(row.contact_id)[0] || '';
-            state.contact = contactId ? { id: contactId, label: String(row.contact_name ?? '').trim() || 'Contact' } : null;
-            if (!scopeAddrs.length) throw new Error('This deal has no email address to look for in the mails.');
+            scopeContactId = idList(row.contact_id)[0] || '';
+            if (!scopeContactId) throw new Error('This deal has no associated contact, so there are no emails to show.');
+            const email = asList(row.contact_email)[0] || '';
+            state.contact = { id: scopeContactId, label: String(row.contact_name ?? '').trim() || email || 'Contact', email };
         }
+
+        // emails whose email_contacts field holds that contact id
+        // (if the field is a list and "=" is rejected, use:  `${F.contacts}::text ILIKE ${sqlStr('%' + scopeContactId + '%')}`)
+        const contactFilter = () => `${F.contacts} = ${sqlStr(scopeContactId)}`;
         function scopeWhere() {
-            const parts = [`${F.deals} = ${sqlStr(scopeId)}`, addrMatch(scopeAddrs)];
+            const parts = [contactFilter()];
             if (SCOPE_TO_CURRENT_USER) parts.push(addrMatch([state.me.email]));
             return parts.join(' AND ');
         }
-        const inScope = r => mentions(r, scopeAddrs) && (!SCOPE_TO_CURRENT_USER || mentions(r, [state.me.email]));
-        const scopeSub = () => `Showing mails with ${scopeAddrs.join(', ')} for this deal`;
+        const inScope = r => !SCOPE_TO_CURRENT_USER || mentions(r, [state.me.email]);
+        const scopeSub = () => `Showing mails associated with ${state.contact ? state.contact.label : 'the contact of this deal'}`;
 
         // ═══════════════════════════════════════════════════════════════
         // DATE FILTER  (IST day boundaries; one date = that single day)
@@ -1955,7 +1965,7 @@
 
         // every mail of one conversation (any direction, any sender), oldest first, with the heavy html column
         async function fetchThread(g) {
-            const where = (g.threadId ? `${F.thread} = ${sqlStr(g.threadId)}` : `id = ${sqlStr(g.latest.id)}`) + (THREAD_ONLY_THIS_DEAL ? ` AND ${F.deals} = ${sqlStr(scopeId)}` : '');
+            const where = (g.threadId ? `${F.thread} = ${sqlStr(g.threadId)}` : `id = ${sqlStr(g.latest.id)}`) + (THREAD_ONLY_THIS_CONTACT ? ` AND ${contactFilter()}` : '');
             const q = `SELECT id, ${F.thread} as thread_id, ${F.subject} as subject, ${F.from} as from_email, ${F.to} as recipient_email, ` +
                 `${F.cc} as cc, ${F.bcc} as bcc, ${F.received} as received_at, ${F.sent} as sent_at, ${F.created} as created_at, ` +
                 `${F.html} as html_content, ${F.content} as content, ${F.direction} as direction, ${F.attachments} as attachments ` +
@@ -2399,9 +2409,11 @@
         // the reply goes to the deal's email address; everyone else who was on the mail (sender, To, Cc) stays in Cc, minus you and that address. Bcc is never copied.
         function replyTargets(m, from) {
             const low = a => a.toLowerCase();
-            const skip = new Set([state.me.email, from, ...scopeAddrs].map(low));
-            const cc = dedupe([...extractEmails(m.from_email), ...extractEmails(m.recipient_email), ...extractEmails(m.cc)].filter(a => !skip.has(low(a))));
-            return { to: [scopeAddrs[0]], cc };
+            const contactEmail = (state.contact && state.contact.email) || '';
+            const skip = new Set([state.me.email, from, contactEmail].filter(Boolean).map(low));
+            const others = dedupe([...extractEmails(m.from_email), ...extractEmails(m.recipient_email), ...extractEmails(m.cc)].filter(a => !skip.has(low(a))));
+            // To = the contact's email; when it could not be read, the other party of this mail (the sender of a received mail, the first recipient of a sent one)
+            return contactEmail ? { to: [contactEmail], cc: others } : { to: others.slice(0, 1), cc: others.slice(1) };
         }
 
         function newDraft(m) {
